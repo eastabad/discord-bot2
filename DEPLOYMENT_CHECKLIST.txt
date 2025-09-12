@@ -1,0 +1,44 @@
+Order Block完整功能部署检查清单
+=====================================
+
+部署前准备:
+□ VPS已安装Docker和Docker Compose
+□ 部署包已上传到/opt/discord-bot目录
+□ .env文件已配置所有必需变量
+□ orderblock_routes.conf已配置ticker路由
+
+核心文件检查:
+□ bot.py (OB Discord命令)
+□ chart_service.py (OB图表生成)
+□ webhook_service.py (obData解析)
+□ orderblock_webhook.py (专用OB webhook)
+□ orderblock_config_manager.py (配置管理)
+□ manage_routes.py (CLI管理工具)
+□ docker-compose.yml
+□ Dockerfile
+
+部署执行:
+□ cd /opt/discord-bot
+□ docker-compose down
+□ docker-compose build --no-cache
+□ docker-compose up -d
+
+功能验证:
+□ curl http://localhost:5000/api/health
+□ Discord: @TD AIassistant OB NVDA,15m
+□ 测试obData webhook解析
+□ 测试Order Block专用webhook
+□ 检查英文界面显示
+□ 验证图表自动生成
+
+监控检查:
+□ docker-compose ps (所有服务Up状态)
+□ docker-compose logs -f discord-bot
+□ 无错误日志连续24小时运行
+
+部署完成标志:
+✓ 所有功能正常工作
+✓ Order Block图表自动生成
+✓ obData字段正确解析显示
+✓ 英文界面优化完成
+✓ 系统稳定运行

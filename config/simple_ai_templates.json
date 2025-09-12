@@ -1,0 +1,74 @@
+{
+  "templates": {
+    "CT": {
+      "name": "图表分析模板",
+      "description": "用于图表分析的AI提示模板",
+      "template": "循环导入问题已修复 - 测试模板更新功能\n\n分析{ticker}：\n- 时间框架：{current_timeframe}\n- MA趋势：{MAtrend_parsed}\n- 评级状态：{ratingstatus_parsed}",
+      "variables": [
+        "ticker",
+        "current_timeframe",
+        "MAtrend_parsed",
+        "AIbandsignal_parsed",
+        "ratingstatus_parsed"
+      ],
+      "last_modified": "2025-08-17T21:00:20.680659"
+    },
+    "RP": {
+      "name": "RP模板",
+      "description": "report_analysis的AI分析模板",
+      "template": "生成一份针对{ticker}的中文交易报告，严格遵循以下要求：重点关注分析该交易与当前趋势的契合程度，判断是否适合执行这个交易提醒。简洁凝练，不要重复题目或提示。输出规则：不超过1500字，格式为Markdown，用加粗、斜体等格式突出关键信息，包含以下部分：\n这是所有的指标情况供你作为判断依据，{parsed_summary}\n## 📈 趋势概况\n基于3个级别的MA趋势、TrendTracer两个级别，以及AI智能趋势带，总结并且给出明确的总体趋势说明。\n## 💡 投资建议\n给出明确的交易建议，基于上面的趋势分析结果，加上原始信号的{action}方向综合分析，同时结合当前价格是否接近支撑或者压力，如果是做多关注压力位{lastSupplyText}，如果是做空关注支撑位{lastDemandText}最终给出明确的肯定性的建议，执行这笔交易，还是放弃。\n\n## 📉 指标分析\n1. **当前波动分析**：结合RSIHA状态、动量指标、中心趋势、WaveMatrix 状态、艾略特波浪趋势、对当前波动特征进行分析总结。\n2. **Squeeze 与 Chopping 分析**：判断市场是否处于横盘挤压或震荡区间，并结合PMA与ADX状态分析趋势强弱。\n3. **买卖压力分析**：基于 CVD 的状态评估资金流向及买卖力量对比。\n## ⚠️ 风险提示\n结合{ratingstatus}，是否接近压力或者是支撑位，总结该交易方向与当前趋势和关键指标不一致的地方，进行简要的风险提示。提醒潜在风险因素。\n",
+      "variables": [
+        "ticker",
+        "webhook_data",
+        "parsed_summary",
+        "action",
+        "current_price",
+        "center_trend",
+        "wavemarket_state",
+        "AIbandsignal",
+        "RSIHAsignal",
+        "MOMOsignal",
+        "MAtrend",
+        "pmaText",
+        "CVDsignal",
+        "adxValue",
+        "lastSupplyText",
+        "lastDemandText",
+        "stop_loss_level",
+        "take_profit_level",
+        "risk_level",
+        "current_timeframe",
+        "MAtrend_parsed",
+        "ratingstatus_parsed",
+        "pmaText_parsed",
+        "MOMOsignal_parsed",
+        "RSIHAsignal_parsed"
+      ]
+    },
+    "IMAGE": {
+      "name": "图片分析模板",
+      "description": "用于分析上传图片的AI提示模板",
+      "template": "请分析这张图片中的股票图表。\n\n如果提供了技术指标数据：\n{parsed_summary}\n\n请从图片中识别：\n1. 图表类型和时间框架\n2. 价格走势特征\n3. 技术指标信号\n4. 关键的支撑阻力位\n5. 图表形态（如三角形、楔形、通道等）\n\n结合技术指标数据（如果有），提供：\n- 当前市场状态评估\n- 可能的价格方向预测\n- 关键关注点位\n- 交易建议\n\n请用中文详细分析，保持客观专业。",
+      "variables": [
+        "parsed_summary"
+      ]
+    },
+    "PREDICT": {
+      "name": "预测分析模板",
+      "description": "用于价格预测的AI提示模板",
+      "template": "基于{ticker}的技术分析数据，请提供价格预测分析。\n\n## 当前市场状态\n- 时间框架：{current_timeframe}\n- 趋势状态：{MAtrend_parsed}\n- 市场评级：{ratingstatus_parsed}\n- 波段信号：{AIbandsignal_parsed}\n\n## 关键指标\n- 动量信号：{MOMOsignal_parsed}\n- 中枢趋势：{center_trend_parsed}\n- 波浪状态：{wavemarket_state_parsed}\n\n请提供：\n\n### 🎯 短期预测（1-3天）\n基于当前技术指标的短期价格方向和关键位。\n\n### 📅 中期预测（1-2周）\n结合趋势和动量指标的中期走势判断。\n\n### 📊 关键价位\n- 支撑位：\n- 阻力位：\n- 突破位：\n\n### ⚡ 交易策略\n- 进入策略：\n- 止损位：\n- 目标位：\n\n### 📋 注意事项\n提醒重要的风险因素和市场变化可能性。\n\n请基于技术分析保持客观，避免过于绝对的预测。",
+      "variables": [
+        "ticker",
+        "current_timeframe",
+        "MAtrend_parsed",
+        "ratingstatus_parsed",
+        "AIbandsignal_parsed",
+        "MOMOsignal_parsed",
+        "center_trend_parsed",
+        "wavemarket_state_parsed"
+      ]
+    }
+  },
+  "last_updated": "2025-08-27T14:49:52.111713",
+  "version": "1.0"
+}

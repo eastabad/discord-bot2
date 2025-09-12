@@ -1,0 +1,280 @@
+{
+  "version": "1.0",
+  "description": "简化字段配置 - 硬编码逻辑，只允许编辑输出文本",
+  "created_at": "2025-08-28T22:07:48.986598",
+  "fields": {
+    "MAtrend": {
+      "logic": "hardcoded: 1=上涨, 0=中性, -1=下跌",
+      "timeframe_reference": "current_timeframe",
+      "outputs": {
+        "1": "{current_timeframe}级别的MA趋势显示上涨趋势，多头排列",
+        "0": "{current_timeframe}级别的MA趋势中性，方向不明",
+        "-1": "{current_timeframe}级别的MA趋势显示下跌趋势，空头排列"
+      }
+    },
+    "MAtrend_timeframe1": {
+      "logic": "hardcoded: 1=上涨, 0=中性, -1=下跌 (第一层时间框架趋势状态)",
+      "timeframe_reference": "adaptive_timeframe_1",
+      "outputs": {
+        "1": "第一层时间框架({adaptive_timeframe_1})MA趋势显示上涨趋势，多头排列",
+        "0": "第一层时间框架({adaptive_timeframe_1})MA趋势显示中性，震荡整理",
+        "-1": "第一层时间框架({adaptive_timeframe_1})MA趋势显示下跌趋势，空头排列",
+        "default": "第一层时间框架MA趋势状态: {value}"
+      }
+    },
+    "MAtrend_timeframe2": {
+      "logic": "hardcoded: 1=上涨, 0=中性, -1=下跌 (第二层时间框架趋势状态)",
+      "timeframe_reference": "adaptive_timeframe_2",
+      "outputs": {
+        "1": "第二层时间框架({adaptive_timeframe_2})MA趋势显示上涨趋势，多头排列",
+        "0": "第二层时间框架({adaptive_timeframe_2})MA趋势显示中性，震荡整理",
+        "-1": "第二层时间框架({adaptive_timeframe_2})MA趋势显示下跌趋势，空头排列",
+        "default": "第二层时间框架MA趋势状态: {value}"
+      }
+    },
+    "AIbandsignal": {
+      "logic": "hardcoded: green uptrend / red downtrend",
+      "outputs": {
+        "green_uptrend": "AI波段显示绿色上涨趋势，多头力量强劲",
+        "red_downtrend": "AI波段显示红色下跌趋势，空头力量占据主导地位"
+      }
+    },
+    "CVDsignal": {
+      "logic": "hardcoded: cvdAboveMA / cvdBelowMA",
+      "outputs": {
+        "cvdAboveMA": "CVD信号显示价量背离指标在移动平均线上方，买盘力量较强",
+        "cvdBelowMA": "CVD信号显示价量背离指标在移动平均线下方，卖盘力量较强"
+      }
+    },
+    "choppingrange_signal": {
+      "logic": "hardcoded: chopping / no chopping",
+      "outputs": {
+        "chopping": "市场处于震荡整理状态，价格在区间内波动",
+        "no chopping": "市场趋势明确，价格突破震荡区间"
+      }
+    },
+    "SQZsignal": {
+      "logic": "hardcoded: squeeze / no squeeze",
+      "outputs": {
+        "squeeze": "波动性收缩信号，市场即将突破",
+        "no squeeze": "波动性正常，市场处于趋势运行中"
+      }
+    },
+    "RSIHAsignal": {
+      "logic": "hardcoded: BullishHA / BearishHA",
+      "outputs": {
+        "BullishHA": "RSI-HA信号显示多头海肯阿什形态，上涨动能增强",
+        "BearishHA": "RSI-HA信号显示空头海肯阿什形态，下跌动能增强"
+      }
+    },
+    "rsi_state_trend": {
+      "logic": "hardcoded: Bullish / Bearish / Neutral",
+      "outputs": {
+        "Bullish": "RSI状态趋势显示多头强势，超买区域运行",
+        "Bearish": "RSI状态趋势显示空头强势，超卖区域运行",
+        "Neutral": "RSI状态趋势显示中性，在中轴附近震荡"
+      }
+    },
+    "center_trend": {
+      "logic": "hardcoded: Strong Bullish / Weak Bullish / Weak Bearish / Strong Bearish",
+      "outputs": {
+        "Strong Bullish": "中枢趋势显示强势多头，价格持续上涨突破",
+        "Weak Bullish": "中枢趋势显示弱势多头，价格温和上涨",
+        "Weak Bearish": "中枢趋势显示弱势空头，价格温和下跌",
+        "Strong Bearish": "中枢趋势显示强势空头，价格持续下跌突破"
+      }
+    },
+    "MOMOsignal": {
+      "logic": "hardcoded: bullishmomo / bearishmomo",
+      "outputs": {
+        "bullishmomo": "动量信号显示多头动量增强，买入动能加速",
+        "bearishmomo": "动量信号显示空头动量增强，卖出动能加速"
+      }
+    },
+    "Middle_smooth_trend": {
+      "logic": "hardcoded: Neutral / Bullish + / Bullish / Bearish + / Bearish",
+      "outputs": {
+        "Neutral": "中线平滑趋势显示中性状态，方向待定",
+        "Bullish +": "中线平滑趋势显示强势多头，上涨动能充足",
+        "Bullish": "中线平滑趋势显示多头趋势，价格稳步上涨",
+        "Bearish +": "中线平滑趋势显示强势空头，下跌动能充足",
+        "Bearish": "中线平滑趋势显示空头趋势，价格稳步下跌"
+      }
+    },
+    "pmaText": {
+      "logic": "hardcoded: PMA Strong Bullish / PMA Bullish / PMA Strong Bearish / PMA Bearish / PMA Trendless",
+      "outputs": {
+        "PMA Strong Bullish": "PMA显示强势多头信号，价格动能强劲向上",
+        "PMA Bullish": "PMA显示多头信号，价格温和上涨",
+        "PMA Strong Bearish": "PMA显示强势空头信号，价格动能强劲向下",
+        "PMA Bearish": "PMA显示空头信号，价格温和下跌",
+        "PMA Trendless": "PMA显示无趋势状态，价格方向不明"
+      }
+    },
+    "wavemarket_state": {
+      "logic": "hardcoded: {current_timeframe} Long Strong / Long Weak / Short Strong / Short Weak / Neutral",
+      "timeframe_reference": "current_timeframe",
+      "outputs": {
+        "Long Strong": "{current_timeframe}级别波浪市场状态显示强势做多，多头力量占主导",
+        "Long Weak": "{current_timeframe}级别波浪市场状态显示弱势做多，多头力量有限",
+        "Short Strong": "{current_timeframe}级别波浪市场状态显示强势做空，空头力量占主导",
+        "Short Weak": "{current_timeframe}级别波浪市场状态显示弱势做空，空头力量有限",
+        "Neutral": "{current_timeframe}级别波浪市场状态显示中性，多空力量均衡"
+      }
+    },
+    "HTFwave_signal": {
+      "logic": "hardcoded: {adaptive_timeframe_1} Bullish / Bearish / Neutral",
+      "timeframe_reference": "adaptive_timeframe_1",
+      "outputs": {
+        "Bullish": "{adaptive_timeframe_1}级别高时间框架波浪信号显示多头趋势",
+        "Bearish": "{adaptive_timeframe_1}级别高时间框架波浪信号显示空头趋势",
+        "Neutral": "{adaptive_timeframe_1}级别高时间框架波浪信号显示中性状态"
+      }
+    },
+    "ewotrend_state": {
+      "logic": "hardcoded: Strong Bullish / Weak Bullish / Weak Bearish / Strong Bearish",
+      "outputs": {
+        "Strong Bullish": "EWO趋势状态显示强势多头，波浪振荡器强烈看涨",
+        "Weak Bullish": "EWO趋势状态显示弱势多头，波浪振荡器温和看涨",
+        "Weak Bearish": "EWO趋势状态显示弱势空头，波浪振荡器温和看跌",
+        "Strong Bearish": "EWO趋势状态显示强势空头，波浪振荡器强烈看跌"
+      }
+    },
+    "choppiness": {
+      "logic": "hardcoded: 数值输出",
+      "outputs": {
+        "default": "震荡指数为{value}，数值越高表示市场越震荡"
+      }
+    },
+    "adxValue": {
+      "logic": "hardcoded: 数值输出",
+      "outputs": {
+        "default": "ADX数值为{value}，反映趋势强度指标"
+      }
+    },
+    "ratingstatus": {
+      "logic": "hardcoded: 13种评级状态组合",
+      "outputs": {
+        "Neutral": "评级状态显示中性，市场方向不明确",
+        "Bullish-Weak-TrendDriven": "评级状态显示弱势多头，由趋势驱动",
+        "Bullish-Weak-OscDriven": "评级状态显示弱势多头，由振荡指标驱动",
+        "Bullish-Medium-TrendDriven": "评级状态显示中等多头，由趋势驱动",
+        "Bullish-Medium-OscDriven": "评级状态显示中等多头，由振荡指标驱动",
+        "Bullish-Strong-TrendDriven": "评级状态显示强势多头，由趋势驱动",
+        "Bullish-Strong-OscDriven": "评级状态显示强势多头，由振荡指标驱动",
+        "Bearish-Weak-TrendDriven": "评级状态显示弱势空头，由趋势驱动",
+        "Bearish-Weak-OscDriven": "评级状态显示弱势空头，由振荡指标驱动",
+        "Bearish-Medium-TrendDriven": "评级状态显示中等空头，由趋势驱动",
+        "Bearish-Medium-OscDriven": "评级状态显示中等空头，由振荡指标驱动",
+        "Bearish-Strong-TrendDriven": "评级状态显示强势空头，由趋势驱动",
+        "Bearish-Strong-OscDriven": "评级状态显示强势空头，由振荡指标驱动"
+      }
+    },
+    "action": {
+      "logic": "hardcoded: buy / sell / hold",
+      "outputs": {
+        "buy": "交易操作：买入",
+        "sell": "交易操作：卖出",
+        "hold": "交易操作：持有"
+      }
+    },
+    "stoploss": {
+      "logic": "hardcoded: 直接数值输出",
+      "outputs": {
+        "default": "止损价位：{value}"
+      }
+    },
+    "takeprofit": {
+      "logic": "hardcoded: 直接数值输出",
+      "outputs": {
+        "default": "止盈价位：{value}"
+      }
+    },
+    "entry_price": {
+      "logic": "hardcoded: 直接数值输出",
+      "outputs": {
+        "default": "入场价位：{value}"
+      }
+    },
+    "position_size": {
+      "logic": "hardcoded: 直接数值输出",
+      "outputs": {
+        "default": "仓位规模：{value}"
+      }
+    },
+    "risk_reward": {
+      "logic": "hardcoded: 直接数值输出",
+      "outputs": {
+        "default": "风险收益比：{value}"
+      }
+    },
+    "indicator": {
+      "logic": "hardcoded: 指标名称直接输出",
+      "outputs": {
+        "default": "技术指标：{value}"
+      }
+    },
+    "oscrating": {
+      "logic": "hardcoded: 振荡指标评级数值",
+      "outputs": {
+        "default": "振荡指标评级：{value}"
+      }
+    },
+    "trendrating": {
+      "logic": "hardcoded: 趋势指标评级数值",
+      "outputs": {
+        "default": "趋势指标评级：{value}"
+      }
+    },
+    "risk": {
+      "logic": "hardcoded: 风险等级",
+      "outputs": {
+        "Low": "风险等级：低风险",
+        "Medium": "风险等级：中等风险",
+        "High": "风险等级：高风险",
+        "default": "风险等级：{value}"
+      }
+    },
+    "poc_summary": {
+      "logic": "hardcoded: POC价格汇总解析",
+      "outputs": {
+        "default": "POC分析显示关键价格水平：{value}，这些是机构重点关注的成交密集区域，价格在这些水平附近容易形成支撑或阻力"
+      }
+    },
+    "POCtrend": {
+      "logic": "hardcoded: POC趋势信号解析 (-2到2的数值)",
+      "outputs": {
+        "2": "强势多头趋势：价格站上所有周期的 POC，短中长期共振，多头主导",
+        "1": "短期强势但中期承压：短线资金推高，但上周/月度 POC 压力仍在，谨慎追多",
+        "0": "震荡区间：价格在不同周期 POC 之间波动，多空分歧，观望为主",
+        "-1": "短期偏弱但中期强势：短线回调，但中期资金依然看多，可等待低吸机会",
+        "-2": "强势空头趋势：价格跌破所有周期的 POC，短中长期共振，空头主导",
+        "default": "POC趋势信号: {value}"
+      }
+    },
+    "lastSupplyText": {
+      "logic": "hardcoded: 供应区价格区间和时间框架，如 '163.56 -165.32 | 15MIN'",
+      "outputs": {
+        "default": "最新供应区（阻力位）：{value}，价格接近该区域时考虑减仓或卖出"
+      }
+    },
+    "lastDemandText": {
+      "logic": "hardcoded: 需求区价格区间和时间框架，如 '155.54 - 157.84 | 15MIN'",
+      "outputs": {
+        "default": "最新需求区（支撑位）：{value}，价格接近该区域时考虑加仓或买入"
+      }
+    },
+    "referencePrice": {
+      "logic": "hardcoded: 参考价格数值",
+      "outputs": {
+        "default": "参考价格：${value}，当前市场重要参考点位"
+      }
+    },
+    "obData": {
+      "logic": "hardcoded: 订单块数据解析，包含时间框架和看涨看跌订单块",
+      "outputs": {
+        "default": "订单块分析：{value}。检测到看涨订单块和看跌订单块区间，这些区域是机构和大资金的重要交易区域，价格接近这些区间时往往会产生强烈的支撑或阻力作用"
+      }
+    }
+  }
+}

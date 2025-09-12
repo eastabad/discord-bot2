@@ -1,0 +1,8 @@
+.venv
+__pycache__
+*.pyc
+config/.env
+.env
+daily_logs/
+attached_assets/
+logs/

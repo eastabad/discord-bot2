@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>详细配置界面 - TDbot配置中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-button.active {
+            color: #007bff;
+            background: white;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #007bff;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+        }
+
+        .tab-content {
+            padding: 30px;
+            display: none;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-description {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .field-search {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .field-search input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .field-search input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .field-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .field-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .field-header {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .field-header h4 {
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .timeframe-ref {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-left: 10px;
+        }
+
+        .toggle-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .field-content {
+            padding: 20px;
+            background: white;
+        }
+
+        .field-content.collapsed {
+            display: none;
+        }
+
+        .field-logic {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-style: italic;
+            color: #1976d2;
+        }
+
+        .outputs-section h5 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .output-item {
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .condition-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .default-tag {
+            background: #ffc107;
+            color: #212529;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+
+        .output-text {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: border-color 0.3s ease;
+        }
+
+        .output-text:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* AI模板配置样式 */
+        .template-selector {
+            margin-bottom: 20px;
+        }
+
+        .template-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .template-editor {
+            margin-bottom: 20px;
+        }
+
+        .template-editor textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        .template-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .template-variables {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .template-variables h6 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .variable-tag {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 TDbot 详细配置中心</h1>
+            <p>管理解析引擎和AI模板的详细配置</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('parsing')">🔍 解析引擎配置</button>
+            <button class="tab-button" onclick="switchTab('templates')">🤖 AI模板配置</button>
+        </div>
+
+        <div id="parsing-tab" class="tab-content active">
+            <h2 class="section-title">🔧 解析引擎配置</h2>
+            <p class="section-description">
+                管理TradingView webhook字段的解析规则和中文输出格式。每个字段都有对应的条件和输出文本，可以自定义中文描述。
+            </p>
+
+            <div class="field-search">
+                <input type="text" id="field-search" placeholder="搜索字段名称..." onkeyup="filterFields()">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <div id="parsing-loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                正在加载解析配置...
+            </div>
+
+            <div id="field-list"></div>
+
+            <div class="action-buttons">
+                <button onclick="saveParsingConfig()" class="btn-primary">💾 保存解析配置</button>
+                <button onclick="testParsingConfig()" class="btn-secondary">🧪 测试解析</button>
+                <button onclick="resetParsingConfig()" class="btn-secondary">↩️ 重置配置</button>
+                <button onclick="exportConfig()" class="btn-secondary">📤 导出配置</button>
+            </div>
+
+            <div class="status-message" id="parsing-status"></div>
+        </div>
+
+        <div id="templates-tab" class="tab-content">
+            <h2 class="section-title">🤖 AI模板配置</h2>
+            <p class="section-description">
+                配置不同类型的AI分析模板，支持变量替换和自定义提示内容。
+            </p>
+
+            <div id="template-loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                正在加载模板配置...
+            </div>
+
+            <div class="template-selector">
+                <select id="template-select" onchange="loadTemplate()">
+                    <option value="">请选择模板类型...</option>
+                    <option value="chart_analysis">📊 图表分析模板</option>
+                    <option value="report_analysis">📈 报告分析模板</option>
+                    <option value="image_analysis">🖼️ 图像分析模板</option>
+                    <option value="prediction_analysis">🔮 预测分析模板</option>
+                </select>
+            </div>
+
+            <div class="template-info">
+                <h6>📝 模板说明</h6>
+                <p id="template-description">请选择上方的模板类型来编辑相应的AI提示模板。</p>
+            </div>
+
+            <div class="template-variables">
+                <h6>🔧 可用变量</h6>
+                <div id="template-variables">
+                    <span class="variable-tag">{ticker}</span>
+                    <span class="variable-tag">{symbol}</span>
+                    <span class="variable-tag">{timeframe}</span>
+                    <span class="variable-tag">{action}</span>
+                    <span class="variable-tag">{webhook_data}</span>
+                    <span class="variable-tag">{parsed_summary}</span>
+                </div>
+            </div>
+
+            <div class="template-editor">
+                <textarea 
+                    id="template-content" 
+                    placeholder="请先选择模板类型，然后在此编辑AI提示模板内容..."
+                ></textarea>
+            </div>
+
+            <div class="action-buttons">
+                <button onclick="saveTemplate()" class="btn-primary">💾 保存模板</button>
+                <button onclick="testTemplate()" class="btn-secondary">🧪 测试模板</button>
+                <button onclick="resetTemplate()" class="btn-secondary">↩️ 重置模板</button>
+            </div>
+
+            <div class="status-message" id="template-status"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentParsingConfig = {};
+        let originalParsingConfig = {};
+        let currentTemplateConfig = {};
+        let originalTemplateConfig = {};
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadParsingConfig();
+            loadTemplateConfig();
+        });
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有按钮的active类
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // 激活对应按钮
+            event.target.classList.add('active');
+        }
+
+        // =============== 解析配置相关函数 ===============
+
+        // 加载解析配置
+        async function loadParsingConfig() {
+            showLoading('parsing-loading', true);
+            
+            try {
+                const response = await fetch('/api/parsing-config');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentParsingConfig = data.config || {};
+                    originalParsingConfig = JSON.parse(JSON.stringify(currentParsingConfig));
+                    renderParsingFields();
+                    showStatus('success', `✅ 成功加载 ${Object.keys(currentParsingConfig).length} 个字段配置`, 'parsing-status');
+                } else {
+                    showStatus('error', `❌ 加载失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `❌ 加载失败: ${error.message}`, 'parsing-status');
+            } finally {
+                showLoading('parsing-loading', false);
+            }
+        }
+
+        // 渲染解析字段
+        function renderParsingFields() {
+            const container = document.getElementById('field-list');
+            container.innerHTML = '';
+            
+            Object.keys(currentParsingConfig).forEach(fieldName => {
+                const fieldConfig = currentParsingConfig[fieldName];
+                const timeframeRef = fieldConfig.timeframe_reference ? 
+                    `<span class="timeframe-ref">(时间框架: ${fieldConfig.timeframe_reference})</span>` : '';
+                
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                fieldItem.setAttribute('data-field-name', fieldName);
+                
+                fieldItem.innerHTML = `
+                    <div class="field-header" onclick="toggleField('${fieldName}')">
+                        <h4>${fieldName} ${timeframeRef}</h4>
+                        <button class="toggle-btn" type="button">展开</button>
+                    </div>
+                    <div class="field-content collapsed" id="content-${fieldName}">
+                        <div class="field-logic">
+                            <strong>解析逻辑:</strong> ${fieldConfig.logic || '硬编码逻辑'}
+                        </div>
+                        <div class="outputs-section">
+                            <h5>条件输出配置:</h5>
+                            <div class="outputs">
+                                ${Object.keys(fieldConfig.outputs || {}).map(condition => `
+                                    <div class="output-item">
+                                        <div class="condition-label">
+                                            <strong>${condition}</strong>
+                                            ${condition === 'default' ? '<span class="default-tag">(默认)</span>' : ''}
+                                        </div>
+                                        <textarea 
+                                            class="output-text" 
+                                            data-field="${fieldName}" 
+                                            data-condition="${condition}"
+                                            placeholder="输入该条件对应的中文输出..."
+                                            rows="2"
+                                            onchange="updateFieldOutput('${fieldName}', '${condition}', this.value)"
+                                        >${fieldConfig.outputs[condition] || ''}</textarea>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(fieldItem);
+            });
+        }
+
+        // 切换字段展开/折叠
+        function toggleField(fieldName) {
+            const content = document.getElementById(`content-${fieldName}`);
+            const button = content.previousElementSibling.querySelector('.toggle-btn');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                button.textContent = '折叠';
+            } else {
+                content.classList.add('collapsed');
+                button.textContent = '展开';
+            }
+        }
+
+        // 过滤字段
+        function filterFields() {
+            const searchTerm = document.getElementById('field-search').value.toLowerCase();
+            const fieldItems = document.querySelectorAll('.field-item');
+            
+            fieldItems.forEach(item => {
+                const fieldName = item.getAttribute('data-field-name').toLowerCase();
+                if (fieldName.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // 更新字段输出
+        function updateFieldOutput(fieldName, condition, value) {
+            if (!currentParsingConfig[fieldName]) {
+                currentParsingConfig[fieldName] = { outputs: {} };
+            }
+            if (!currentParsingConfig[fieldName].outputs) {
+                currentParsingConfig[fieldName].outputs = {};
+            }
+            currentParsingConfig[fieldName].outputs[condition] = value;
+        }
+
+        // 保存解析配置
+        async function saveParsingConfig() {
+            try {
+                const response = await fetch('/api/parsing-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentParsingConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    originalParsingConfig = JSON.parse(JSON.stringify(currentParsingConfig));
+                    showStatus('success', '✅ 解析配置保存成功！', 'parsing-status');
+                } else {
+                    showStatus('error', `❌ 保存失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `❌ 保存失败: ${error.message}`, 'parsing-status');
+            }
+        }
+
+        // 重置解析配置
+        function resetParsingConfig() {
+            if (confirm('确定要重置到上次保存的状态吗？未保存的修改将丢失！')) {
+                currentParsingConfig = JSON.parse(JSON.stringify(originalParsingConfig));
+                renderParsingFields();
+                showStatus('info', '⚠️ 配置已重置到上次保存的状态', 'parsing-status');
+            }
+        }
+
+        // 测试解析配置
+        async function testParsingConfig() {
+            try {
+                const response = await fetch('/api/test-parsing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        config: currentParsingConfig,
+                        test_data: {
+                            symbol: 'AAPL',
+                            timeframe: '15m',
+                            action: 'buy',
+                            MAtrend: 1,
+                            pmaText: 'PMA Strong Bullish'
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', `✅ 测试成功: ${data.result}`, 'parsing-status');
+                } else {
+                    showStatus('error', `❌ 测试失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `❌ 测试失败: ${error.message}`, 'parsing-status');
+            }
+        }
+
+        // 导出配置
+        async function exportConfig() {
+            try {
+                const response = await fetch('/api/export-config');
+                const data = await response.json();
+                
+                if (data.success || data.signal_mappings) {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `tdbot-config-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showStatus('success', '✅ 配置导出成功！', 'parsing-status');
+                } else {
+                    showStatus('error', `❌ 导出失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `❌ 导出失败: ${error.message}`, 'parsing-status');
+            }
+        }
+
+        // =============== AI模板配置相关函数 ===============
+
+        // 加载模板配置
+        async function loadTemplateConfig() {
+            showLoading('template-loading', true);
+            
+            try {
+                const response = await fetch('/api/ai-templates-unified');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTemplateConfig = data.templates || {};
+                    originalTemplateConfig = JSON.parse(JSON.stringify(currentTemplateConfig));
+                    showStatus('success', `✅ 成功加载 ${Object.keys(currentTemplateConfig).length} 个模板`, 'template-status');
+                } else {
+                    showStatus('error', `❌ 加载失败: ${data.error}`, 'template-status');
+                }
+            } catch (error) {
+                showStatus('error', `❌ 加载失败: ${error.message}`, 'template-status');
+            } finally {
+                showLoading('template-loading', false);
+            }
+        }
+
+        // 加载选中的模板
+        function loadTemplate() {
+            const selectElement = document.getElementById('template-select');
+            const templateType = selectElement.value;
+            const contentElement = document.getElementById('template-content');
+            const descriptionElement = document.getElementById('template-description');
+            
+            if (templateType && currentTemplateConfig[templateType]) {
+                contentElement.value = currentTemplateConfig[templateType].template || '';
+                contentElement.placeholder = `编辑${selectElement.options[selectElement.selectedIndex].text}模板...`;
+                descriptionElement.textContent = currentTemplateConfig[templateType].description || 
+                    `${selectElement.options[selectElement.selectedIndex].text}的AI分析模板`;
+            } else {
+                contentElement.value = '';
+                contentElement.placeholder = '请选择模板类型后编辑...';
+                descriptionElement.textContent = '请选择上方的模板类型来编辑相应的AI提示模板。';
+            }
+        }
+
+        // 保存模板
+        async function saveTemplate() {
+            const templateType = document.getElementById('template-select').value;
+            const templateContent = document.getElementById('template-content').value;
+            
+            if (!templateType) {
+                showStatus('error', '❌ 请选择模板类型', 'template-status');
+                return;
+            }
+            
+            if (!templateContent.trim()) {
+                showStatus('error', '❌ 请输入模板内容', 'template-status');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ai-templates-unified', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template_type: templateType,
+                        template_content: templateContent
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 更新本地配置
+                    if (!currentTemplateConfig[templateType]) {
+                        currentTemplateConfig[templateType] = {};
+                    }
+                    currentTemplateConfig[templateType].template = templateContent;
+                    originalTemplateConfig = JSON.parse(JSON.stringify(currentTemplateConfig));
+                    showStatus('success', '✅ 模板保存成功！', 'template-status');
+                } else {
+                    showStatus('error', `❌ 保存失败: ${data.error}`, 'template-status');
+                }
+            } catch (error) {
+                showStatus('error', `❌ 保存失败: ${error.message}`, 'template-status');
+            }
+        }
+
+        // 测试模板
+        function testTemplate() {
+            const templateType = document.getElementById('template-select').value;
+            const templateContent = document.getElementById('template-content').value;
+            
+            if (!templateType || !templateContent.trim()) {
+                showStatus('error', '❌ 请选择模板类型并输入内容', 'template-status');
+                return;
+            }
+            
+            // 模拟测试数据
+            const testData = {
+                ticker: 'AAPL',
+                symbol: 'AAPL',
+                timeframe: '15m',
+                action: 'buy',
+                webhook_data: '{"MAtrend": 1, "pmaText": "PMA Strong Bullish"}'
+            };
+            
+            let result = templateContent;
+            Object.keys(testData).forEach(key => {
+                result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), testData[key]);
+            });
+            
+            showStatus('success', `✅ 模板测试预览:\n${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`, 'template-status');
+        }
+
+        // 重置模板
+        function resetTemplate() {
+            const templateType = document.getElementById('template-select').value;
+            
+            if (!templateType) {
+                showStatus('error', '❌ 请选择模板类型', 'template-status');
+                return;
+            }
+            
+            if (confirm('确定要重置到上次保存的状态吗？')) {
+                const originalTemplate = originalTemplateConfig[templateType];
+                if (originalTemplate) {
+                    document.getElementById('template-content').value = originalTemplate.template || '';
+                    showStatus('info', '⚠️ 模板已重置到上次保存的状态', 'template-status');
+                } else {
+                    document.getElementById('template-content').value = '';
+                    showStatus('info', '⚠️ 模板已清空', 'template-status');
+                }
+            }
+        }
+
+        // =============== 通用工具函数 ===============
+
+        // 显示加载状态
+        function showLoading(elementId, show) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(type, message, elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.className = `status-message ${type}`;
+                element.textContent = message;
+                element.style.display = 'block';
+                
+                // 3秒后自动隐藏成功消息
+                if (type === 'success') {
+                    setTimeout(() => {
+                        element.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

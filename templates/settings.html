@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDbot 配置管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .config-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .config-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .config-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #f0fff4;
+            border-color: #38a169;
+            color: #22543d;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            border-color: #e53e3e;
+            color: #742a2a;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+
+        .export-import {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .config-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 TDbot 配置管理系统</h1>
+            <p>信号映射配置 & AI模板管理</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="config-sections">
+            <!-- 信号映射配置 -->
+            <div class="config-section">
+                <h2 class="section-title">📊 信号映射配置</h2>
+                
+                <div class="form-group">
+                    <label for="signalType">信号类型</label>
+                    <select id="signalType">
+                        <option value="CVDsignal">CVDsignal</option>
+                        <option value="pmaText">pmaText</option>
+                        <option value="trendSignal">trendSignal</option>
+                        <option value="signalStrength">signalStrength</option>
+                        <option value="signal">signal</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="customSignalType" style="display: none;">
+                    <label for="customSignalTypeInput">自定义信号类型</label>
+                    <input type="text" id="customSignalTypeInput" placeholder="输入自定义信号类型">
+                </div>
+
+                <div class="form-group">
+                    <label for="signalValue">信号值</label>
+                    <input type="text" id="signalValue" placeholder="例如: cvdAboveMA">
+                </div>
+
+                <div class="form-group">
+                    <label for="chineseDescription">中文描述</label>
+                    <input type="text" id="chineseDescription" placeholder="例如: CVD 高于移动平均线 (买压增加，资金流入)">
+                </div>
+
+                <button class="btn" onclick="addSignalMapping()">添加映射</button>
+                <button class="btn btn-secondary" onclick="loadSignalMappings()">刷新列表</button>
+            </div>
+
+            <!-- AI模板配置 -->
+            <div class="config-section">
+                <h2 class="section-title">🧠 AI模板配置</h2>
+                
+                <div class="form-group">
+                    <label for="templateName">模板名称</label>
+                    <input type="text" id="templateName" placeholder="例如: 图表分析模板">
+                </div>
+
+                <div class="form-group">
+                    <label for="commandType">命令类型</label>
+                    <select id="commandType">
+                        <option value="CT">CT (图表请求)</option>
+                        <option value="RP">RP (报告请求)</option>
+                        <option value="IMAGE">IMAGE (图像分析)</option>
+                        <option value="PREDICT">PREDICT (预测分析)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="templateContent">模板内容</label>
+                    <textarea id="templateContent" placeholder="请输入AI提示词模板，可使用 {变量} 占位符"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="templateDescription">模板描述</label>
+                    <input type="text" id="templateDescription" placeholder="简短描述此模板的用途">
+                </div>
+
+                <button class="btn" onclick="addAITemplate()">添加模板</button>
+                <button class="btn btn-secondary" onclick="loadAITemplates()">刷新列表</button>
+            </div>
+        </div>
+
+        <!-- 信号映射列表 -->
+        <div class="config-section">
+            <h2 class="section-title">📋 当前信号映射</h2>
+            <div id="signalMappingsContainer">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI模板列表 -->
+        <div class="config-section">
+            <h2 class="section-title">📄 当前AI模板</h2>
+            <div id="aiTemplatesContainer">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试功能 -->
+        <div class="test-section">
+            <h2 class="section-title">🧪 测试功能</h2>
+            
+            <div class="form-group">
+                <label for="testData">测试数据 (JSON格式)</label>
+                <textarea id="testData" placeholder='{"CVDsignal": "cvdAboveMA", "pmaText": "PMA Strong Bullish"}'></textarea>
+            </div>
+
+            <button class="btn" onclick="testTranslation()">测试翻译</button>
+            
+            <div id="testResults" style="margin-top: 20px;"></div>
+
+            <div class="export-import">
+                <button class="btn btn-secondary" onclick="exportConfig()">导出配置</button>
+                <button class="btn btn-secondary" onclick="showImportModal()">导入配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入配置模态框 -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeImportModal()">&times;</span>
+            <h2>导入配置</h2>
+            <div class="form-group">
+                <label for="importData">配置数据 (JSON格式)</label>
+                <textarea id="importData" placeholder="粘贴导出的配置JSON数据"></textarea>
+            </div>
+            <button class="btn" onclick="importConfig()">导入</button>
+            <button class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSignalMappings();
+            loadAITemplates();
+            
+            // 监听信号类型选择变化
+            document.getElementById('signalType').addEventListener('change', function() {
+                const customDiv = document.getElementById('customSignalType');
+                if (this.value === 'custom') {
+                    customDiv.style.display = 'block';
+                } else {
+                    customDiv.style.display = 'none';
+                }
+            });
+        });
+
+        // 显示提示消息
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // 加载信号映射
+        async function loadSignalMappings() {
+            try {
+                const response = await fetch('/api/signal-mappings');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySignalMappings(result.data);
+                } else {
+                    showAlert('加载信号映射失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('加载信号映射失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示信号映射
+        function displaySignalMappings(mappings) {
+            const container = document.getElementById('signalMappingsContainer');
+            
+            if (mappings.length === 0) {
+                container.innerHTML = '<p>暂无信号映射配置</p>';
+                return;
+            }
+
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>信号类型</th>
+                            <th>信号值</th>
+                            <th>中文描述</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            mappings.forEach((mapping, index) => {
+                html += `
+                    <tr>
+                        <td>${mapping.signal_type}</td>
+                        <td>${mapping.signal_value}</td>
+                        <td>${mapping.chinese_description}</td>
+                        <td>${new Date(mapping.updated_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteSignalMapping(${index})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // 添加信号映射
+        async function addSignalMapping() {
+            const signalTypeSelect = document.getElementById('signalType');
+            const customSignalTypeInput = document.getElementById('customSignalTypeInput');
+            const signalValue = document.getElementById('signalValue').value;
+            const chineseDescription = document.getElementById('chineseDescription').value;
+
+            let signalType;
+            if (signalTypeSelect.value === 'custom') {
+                signalType = customSignalTypeInput.value;
+            } else {
+                signalType = signalTypeSelect.value;
+            }
+
+            if (!signalType || !signalValue || !chineseDescription) {
+                showAlert('请填写所有字段', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/signal-mappings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        signal_type: signalType,
+                        signal_value: signalValue,
+                        chinese_description: chineseDescription
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('信号映射添加成功');
+                    // 清空表单
+                    document.getElementById('signalValue').value = '';
+                    document.getElementById('chineseDescription').value = '';
+                    customSignalTypeInput.value = '';
+                    // 重新加载列表
+                    loadSignalMappings();
+                } else {
+                    showAlert('添加失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('添加失败: ' + error.message, 'error');
+            }
+        }
+
+        // 删除信号映射
+        async function deleteSignalMapping(index) {
+            if (!confirm('确定要删除这个信号映射吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/signal-mappings/${index}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('信号映射删除成功');
+                    loadSignalMappings();
+                } else {
+                    showAlert('删除失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('删除失败: ' + error.message, 'error');
+            }
+        }
+
+        // 加载AI模板
+        async function loadAITemplates() {
+            try {
+                const response = await fetch('/api/ai-templates');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayAITemplates(result.data);
+                } else {
+                    showAlert('加载AI模板失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('加载AI模板失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示AI模板
+        function displayAITemplates(templates) {
+            const container = document.getElementById('aiTemplatesContainer');
+            
+            if (templates.length === 0) {
+                container.innerHTML = '<p>暂无AI模板配置</p>';
+                return;
+            }
+
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>模板名称</th>
+                            <th>命令类型</th>
+                            <th>描述</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            templates.forEach((template, index) => {
+                html += `
+                    <tr>
+                        <td>${template.template_name}</td>
+                        <td>${template.command_type}</td>
+                        <td>${template.description}</td>
+                        <td>${new Date(template.updated_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editAITemplate(${index})">编辑</button>
+                            <button class="btn btn-danger" onclick="deleteAITemplate(${index})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // 添加AI模板
+        async function addAITemplate() {
+            const templateName = document.getElementById('templateName').value;
+            const commandType = document.getElementById('commandType').value;
+            const templateContent = document.getElementById('templateContent').value;
+            const templateDescription = document.getElementById('templateDescription').value;
+
+            if (!templateName || !commandType || !templateContent) {
+                showAlert('请填写必需字段', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/ai-templates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        template_name: templateName,
+                        command_type: commandType,
+                        template_content: templateContent,
+                        description: templateDescription
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('AI模板添加成功');
+                    // 清空表单
+                    document.getElementById('templateName').value = '';
+                    document.getElementById('templateContent').value = '';
+                    document.getElementById('templateDescription').value = '';
+                    // 重新加载列表
+                    loadAITemplates();
+                } else {
+                    showAlert('添加失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('添加失败: ' + error.message, 'error');
+            }
+        }
+
+        // 删除AI模板
+        async function deleteAITemplate(index) {
+            if (!confirm('确定要删除这个AI模板吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/ai-templates/${index}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('AI模板删除成功');
+                    loadAITemplates();
+                } else {
+                    showAlert('删除失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('删除失败: ' + error.message, 'error');
+            }
+        }
+
+        // 测试翻译
+        async function testTranslation() {
+            const testData = document.getElementById('testData').value;
+            
+            if (!testData) {
+                showAlert('请输入测试数据', 'error');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(testData);
+                
+                const response = await fetch('/api/test-translation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const resultsDiv = document.getElementById('testResults');
+                    resultsDiv.innerHTML = `
+                        <h3>翻译结果:</h3>
+                        <pre style="background: #f7fafc; padding: 15px; border-radius: 8px; overflow-x: auto;">${JSON.stringify(result.results, null, 2)}</pre>
+                    `;
+                } else {
+                    showAlert('测试失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('测试失败: ' + error.message, 'error');
+            }
+        }
+
+        // 导出配置
+        async function exportConfig() {
+            try {
+                const response = await fetch('/api/export-config');
+                const config = await response.json();
+                
+                const dataStr = JSON.stringify(config, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `tdbot-config-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                showAlert('配置导出成功');
+            } catch (error) {
+                showAlert('导出失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示导入模态框
+        function showImportModal() {
+            document.getElementById('importModal').style.display = 'block';
+        }
+
+        // 关闭导入模态框
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+        }
+
+        // 导入配置
+        async function importConfig() {
+            const importData = document.getElementById('importData').value;
+            
+            if (!importData) {
+                showAlert('请输入配置数据', 'error');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(importData);
+                
+                const response = await fetch('/api/import-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('配置导入成功');
+                    closeImportModal();
+                    // 重新加载数据
+                    loadSignalMappings();
+                    loadAITemplates();
+                } else {
+                    showAlert('导入失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('导入失败: ' + error.message, 'error');
+            }
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('importModal');
+            if (event.target == modal) {
+                closeImportModal();
+            }
+        }
+    </script>
+</body>
+</html>

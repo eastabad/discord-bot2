@@ -1,0 +1,14 @@
+aiohttp==3.12.15
+anthropic==0.62.0
+discord.py==2.5.2
+flask==3.1.1
+google-generativeai==1.30.0
+psycopg2-binary==2.9.10
+psutil==5.9.8
+pytz==2025.2
+requests==2.32.4
+sift-stack-py==0.1.15
+sqlalchemy==2.0.43
+python-dotenv==1.0.1
+redis==5.1.1
+pillow==10.4.0

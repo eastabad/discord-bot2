@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简化配置系统 - TDbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .field-container {
+            display: grid;
+            gap: 15px;
+        }
+
+        .field-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .field-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .field-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .field-description {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .condition-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .condition-item {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            align-items: start;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #28a745;
+            margin-bottom: 10px;
+        }
+
+        .condition-label {
+            font-weight: 500;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .condition-output {
+            padding: 12px 15px;
+            border: 2px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.95em;
+            resize: vertical;
+            min-width: 100%;
+            min-height: 60px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.4;
+        }
+
+        .condition-output:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .navigation {
+            background: #343a40;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .navigation a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .navigation a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #e9ecef;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 字段配置管理</h1>
+            <p>TDbot 解析字段输出配置 - 显示每个字段的条件和对应中文输出</p>
+        </div>
+
+        <div class="navigation">
+            <a href="/">首页</a>
+            <a href="/settings">完整配置</a>
+            <a href="/simple-config" class="active">简化配置</a>
+            <a href="/parsing">解析配置</a>
+            <a href="/simple-ai-template">AI模板</a>
+        </div>
+
+        <div class="main-content">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                正在加载配置数据...
+            </div>
+
+            <div id="content" style="display: none;">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="field-count">0</div>
+                        <div class="stat-label">配置字段</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="condition-count">0</div>
+                        <div class="stat-label">输出条件</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="timeframe-count">0</div>
+                        <div class="stat-label">时间框架字段</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">🎯 字段详细配置</h2>
+                    <p class="section-description">
+                        管理29个TradingView webhook字段的中文输出格式。每个字段显示完整的解析逻辑、时间框架引用和所有输出条件，让你清楚看到每个条件对应的中文输出内容。
+                    </p>
+                    
+                    <div id="fields-container" class="field-container">
+                        <!-- 字段配置将在这里动态加载 -->
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="saveConfig()">💾 保存所有配置</button>
+                    <button class="btn btn-secondary" onclick="loadConfig()">🔄 重新加载</button>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">🧪 解析测试</h2>
+                    <p class="section-description">
+                        输入TradingView webhook的JSON数据，测试解析引擎和字段配置的输出效果。
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <h4 style="margin-bottom: 10px; color: #333;">输入JSON数据:</h4>
+                            <textarea 
+                                id="test-input" 
+                                placeholder="输入TradingView webhook JSON数据，例如:&#10;{&#10;  &quot;symbol&quot;: &quot;AAPL&quot;,&#10;  &quot;MAtrend&quot;: 1,&#10;  &quot;pmaText&quot;: &quot;PMA Strong Bullish&quot;,&#10;  &quot;action&quot;: &quot;buy&quot;&#10;}"
+                                style="width: 100%; height: 200px; padding: 15px; border: 2px solid #ced4da; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; resize: vertical;"
+                            ></textarea>
+                        </div>
+                        
+                        <div>
+                            <h4 style="margin-bottom: 10px; color: #333;">解析结果:</h4>
+                            <div 
+                                id="test-output" 
+                                style="width: 100%; height: 200px; padding: 15px; border: 2px solid #e9ecef; border-radius: 8px; background: #f8f9fa; font-family: 'Courier New', monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap;"
+                            >点击测试按钮查看解析结果...</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <button class="btn btn-success" onclick="testParsingConfig()" style="margin-right: 15px;">🔍 测试解析</button>
+                        <button class="btn btn-secondary" onclick="loadSampleData()">📝 加载示例数据</button>
+                        <button class="btn btn-secondary" onclick="clearTestData()">🗑️ 清空</button>
+                    </div>
+                </div>
+
+                <div class="status-message" id="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let configData = {};
+        let originalData = {};
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+        });
+
+        // 加载配置数据
+        async function loadConfig() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/simple-config/fields');
+                const data = await response.json();
+                
+                if (data.success) {
+                    configData = data.fields || {};
+                    originalData = JSON.parse(JSON.stringify(configData));
+                    renderFields();
+                    updateStats();
+                    showStatus('success', '配置加载成功');
+                } else {
+                    showStatus('error', '加载失败: ' + data.error);
+                }
+            } catch (error) {
+                showStatus('error', '加载失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 渲染字段配置
+        function renderFields() {
+            const container = document.getElementById('fields-container');
+            container.innerHTML = '';
+
+            Object.keys(configData).forEach(fieldName => {
+                const fieldConfig = configData[fieldName];
+                const outputs = fieldConfig.outputs || {};
+                
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'field-item';
+                
+                // 显示字段逻辑和时间框架引用
+                let fieldInfo = `<div class="field-name">${fieldName}</div>`;
+                fieldInfo += `<div class="field-description">逻辑：${fieldConfig.logic || '硬编码解析逻辑'}</div>`;
+                
+                if (fieldConfig.timeframe_reference) {
+                    fieldInfo += `<div class="field-description">时间框架：${fieldConfig.timeframe_reference}</div>`;
+                }
+                
+                // 构建条件输出编辑器
+                const conditionItems = Object.keys(outputs).map(condition => {
+                    const conditionValue = outputs[condition] || '';
+                    return `
+                        <div class="condition-item">
+                            <div class="condition-label">
+                                <strong>${condition}:</strong>
+                            </div>
+                            <textarea 
+                                class="condition-output" 
+                                onchange="updateOutput('${fieldName}', '${condition}', this.value)"
+                                placeholder="输入该条件对应的中文输出..."
+                                style="min-height: 60px; width: 100%;"
+                            >${conditionValue}</textarea>
+                        </div>
+                    `;
+                }).join('');
+                
+                fieldDiv.innerHTML = `
+                    ${fieldInfo}
+                    <div class="condition-list" style="margin-top: 15px;">
+                        <h4 style="color: #007bff; margin-bottom: 10px;">输出条件配置：</h4>
+                        ${conditionItems}
+                    </div>
+                `;
+                
+                container.appendChild(fieldDiv);
+            });
+        }
+
+        // 更新输出内容
+        function updateOutput(fieldName, condition, value) {
+            if (!configData[fieldName]) {
+                configData[fieldName] = { outputs: {} };
+            }
+            if (!configData[fieldName].outputs) {
+                configData[fieldName].outputs = {};
+            }
+            configData[fieldName].outputs[condition] = value;
+        }
+
+        // 保存配置
+        async function saveConfig() {
+            try {
+                const response = await fetch('/api/simple-config/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fields: configData })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    originalData = JSON.parse(JSON.stringify(configData));
+                    showStatus('success', '配置保存成功！');
+                } else {
+                    showStatus('error', '保存失败: ' + data.error);
+                }
+            } catch (error) {
+                showStatus('error', '保存失败: ' + error.message);
+            }
+        }
+
+        // 测试解析配置
+        async function testParsingConfig() {
+            const inputText = document.getElementById('test-input').value.trim();
+            const outputDiv = document.getElementById('test-output');
+            
+            if (!inputText) {
+                showStatus('error', '请输入测试数据');
+                return;
+            }
+            
+            try {
+                const testData = JSON.parse(inputText);
+                
+                outputDiv.innerHTML = '正在测试解析...';
+                
+                const response = await fetch('/api/test-simple-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const results = data.results;
+                    
+                    // 格式化输出结果
+                    let output = `=== 解析结果 ===\n\n`;
+                    output += `原始数据:\n${JSON.stringify(testData, null, 2)}\n\n`;
+                    output += `解析后字段:\n`;
+                    
+                    if (results.parsed_fields) {
+                        Object.keys(results.parsed_fields).forEach(key => {
+                            if (key.endsWith('_parsed')) {
+                                const field = key.replace('_parsed', '');
+                                const rawValue = results.parsed_fields[field + '_raw'];
+                                const parsedValue = results.parsed_fields[key];
+                                output += `  ${field}: ${rawValue} → "${parsedValue}"\n`;
+                            }
+                        });
+                    }
+                    
+                    if (results.summary_text) {
+                        output += `\n汇总文本:\n"${results.summary_text}"`;
+                    }
+                    
+                    outputDiv.innerHTML = output;
+                    showStatus('success', '解析测试成功！');
+                    console.log('测试结果:', results);
+                } else {
+                    outputDiv.innerHTML = `解析失败: ${data.error}`;
+                    showStatus('error', '测试失败: ' + data.error);
+                }
+            } catch (error) {
+                outputDiv.innerHTML = `JSON格式错误或解析失败:\n${error.message}`;
+                showStatus('error', 'JSON格式错误: ' + error.message);
+            }
+        }
+        
+        // 加载示例数据
+        function loadSampleData() {
+            const sampleData = {
+                "symbol": "AAPL",
+                "MAtrend": 1,
+                "pmaText": "PMA Strong Bullish",
+                "action": "buy",
+                "timeframe": "1h",
+                "price": 150.25,
+                "volume": 1000000
+            };
+            
+            document.getElementById('test-input').value = JSON.stringify(sampleData, null, 2);
+            showStatus('success', '示例数据已加载');
+        }
+        
+        // 清空测试数据
+        function clearTestData() {
+            document.getElementById('test-input').value = '';
+            document.getElementById('test-output').innerHTML = '点击测试按钮查看解析结果...';
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const fieldCount = Object.keys(configData).length;
+            let conditionCount = 0;
+            let timeframeCount = 0;
+
+            Object.keys(configData).forEach(fieldName => {
+                const outputs = configData[fieldName].outputs || {};
+                conditionCount += Object.keys(outputs).length;
+                
+                if (fieldName.includes('timeframe') || fieldName.includes('Timeframe')) {
+                    timeframeCount++;
+                }
+            });
+
+            document.getElementById('field-count').textContent = fieldCount;
+            document.getElementById('condition-count').textContent = conditionCount;
+            document.getElementById('timeframe-count').textContent = timeframeCount;
+        }
+
+        // 显示加载状态
+        function showLoading(show) {
+            const loadingEl = document.getElementById('loading');
+            const contentEl = document.getElementById('content');
+            
+            if (show) {
+                loadingEl.style.display = 'block';
+                contentEl.style.display = 'none';
+            } else {
+                loadingEl.style.display = 'none';
+                contentEl.style.display = 'block';
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(type, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status-message ${type}`;
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

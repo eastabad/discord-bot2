@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简化AI模板编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .template-selector {
+            margin-bottom: 25px;
+        }
+
+        .template-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .template-selector select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .template-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .template-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .template-info h3 {
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .template-info p {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .variables-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .variables-info h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .variable-group {
+            margin-bottom: 10px;
+        }
+
+        .variable-group strong {
+            color: #1565c0;
+        }
+
+        .variable-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .variable-tag {
+            background: #bbdefb;
+            color: #0d47a1;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .editor-section {
+            margin-bottom: 25px;
+        }
+
+        .editor-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .template-editor {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .template-editor:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .test-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .test-data {
+            width: 100%;
+            min-height: 120px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .test-result {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 简化AI模板编辑器</h1>
+            <p>直接编辑AI提示模板，支持变量替换</p>
+        </div>
+
+        <div class="template-selector">
+            <label for="templateType">选择模板类型：</label>
+            <select id="templateType" onchange="loadTemplate()">
+                <option value="">-- 请选择模板 --</option>
+                <option value="CT">CT - 图表分析模板</option>
+                <option value="RP">RP - 报告生成模板</option>
+                <option value="IMAGE">IMAGE - 图片分析模板</option>
+                <option value="PREDICT">PREDICT - 预测分析模板</option>
+            </select>
+        </div>
+
+        <div id="templateInfo" class="template-info" style="display: none;">
+            <h3 id="templateName"></h3>
+            <p id="templateDescription"></p>
+        </div>
+
+        <div class="variables-info">
+            <h4>📋 可用变量</h4>
+            <div class="variable-group">
+                <strong>Webhook原始数据：</strong>
+                <div class="variable-tags">
+                    <span class="variable-tag">{ticker}</span>
+                    <span class="variable-tag">{current_timeframe}</span>
+                    <span class="variable-tag">{MAtrend}</span>
+                    <span class="variable-tag">{ratingstatus}</span>
+                    <span class="variable-tag">{AIbandsignal}</span>
+                    <span class="variable-tag">{pmaText}</span>
+                    <span class="variable-tag">等19个原始字段...</span>
+                </div>
+            </div>
+            <div class="variable-group">
+                <strong>解析后数据：</strong>
+                <div class="variable-tags">
+                    <span class="variable-tag">{MAtrend_parsed}</span>
+                    <span class="variable-tag">{ratingstatus_parsed}</span>
+                    <span class="variable-tag">{AIbandsignal_parsed}</span>
+                    <span class="variable-tag">{pmaText_parsed}</span>
+                    <span class="variable-tag">等19个解析字段...</span>
+                </div>
+            </div>
+            <div class="variable-group">
+                <strong>特殊变量：</strong>
+                <div class="variable-tags">
+                    <span class="variable-tag">{webhook_data}</span>
+                    <span class="variable-tag">{parsed_summary}</span>
+                    <span class="variable-tag">{analysis_summary}</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+                    <strong>{parsed_summary}</strong>: 所有19个字段解析后的中文描述汇总<br>
+                    <strong>{analysis_summary}</strong>: 解析结果的简洁分析摘要<br>
+                    <strong>{webhook_data}</strong>: TradingView发送的原始JSON数据
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-section">
+            <label for="templateEditor">编辑模板内容：</label>
+            <textarea id="templateEditor" class="template-editor" 
+                placeholder="请先选择一个模板类型开始编辑..."></textarea>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="saveTemplate()">💾 保存模板</button>
+            <button class="btn btn-secondary" onclick="resetTemplate()">🔄 重置</button>
+            <button class="btn btn-success" onclick="testTemplate()">🧪 测试模板</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 模板测试</h3>
+            <p>输入测试数据（JSON格式）：</p>
+            <textarea id="testData" class="test-data" placeholder='{"ticker": "AAPL", "current_timeframe": "4H", "MAtrend_parsed": "4H级别的MA趋势显示上涨趋势，多头排列", "ratingstatus_parsed": "评级状态显示强势多头，由趋势驱动"}'></textarea>
+            <button class="btn btn-success" onclick="testTemplate()">运行测试</button>
+            <div id="testResult" class="test-result"></div>
+        </div>
+    </div>
+
+    <script>
+        let templates = {};
+        let currentTemplate = '';
+
+        // 页面加载时获取所有模板
+        window.onload = function() {
+            loadAllTemplates();
+        };
+
+        async function loadAllTemplates() {
+            try {
+                const response = await fetch('/api/simple-ai-templates');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.templates) {
+                        // API返回的是直接的模板对象，不是数组
+                        templates = data.templates;
+                        console.log('Templates loaded:', templates);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load templates:', error);
+            }
+        }
+
+        function loadTemplate() {
+            const templateType = document.getElementById('templateType').value;
+            const templateEditor = document.getElementById('templateEditor');
+            const templateInfo = document.getElementById('templateInfo');
+            const templateName = document.getElementById('templateName');
+            const templateDescription = document.getElementById('templateDescription');
+
+            if (!templateType) {
+                templateInfo.style.display = 'none';
+                templateEditor.value = '';
+                templateEditor.placeholder = '请先选择一个模板类型开始编辑...';
+                return;
+            }
+
+            const template = templates[templateType];
+            if (template) {
+                currentTemplate = templateType;
+                templateEditor.value = template.template;
+                templateEditor.placeholder = '';
+                
+                // 显示模板信息
+                templateName.textContent = template.name;
+                templateDescription.textContent = template.description;
+                templateInfo.style.display = 'block';
+            }
+        }
+
+        async function saveTemplate() {
+            if (!currentTemplate) {
+                showMessage('请先选择一个模板类型', 'error');
+                return;
+            }
+
+            const templateContent = document.getElementById('templateEditor').value;
+            if (!templateContent.trim()) {
+                showMessage('模板内容不能为空', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/simple-ai-templates/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        template_type: currentTemplate,
+                        template_content: templateContent
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showMessage('模板保存成功！', 'success');
+                    // 更新本地模板
+                    templates[currentTemplate].template = templateContent;
+                } else {
+                    showMessage('保存失败：' + (data.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('保存失败：' + error.message, 'error');
+            }
+        }
+
+        function resetTemplate() {
+            if (!currentTemplate) {
+                showMessage('请先选择一个模板类型', 'error');
+                return;
+            }
+
+            const template = templates[currentTemplate];
+            if (template) {
+                document.getElementById('templateEditor').value = template.template;
+                showMessage('模板已重置', 'success');
+            }
+        }
+
+        async function testTemplate() {
+            if (!currentTemplate) {
+                showMessage('请先选择一个模板类型', 'error');
+                return;
+            }
+
+            const templateContent = document.getElementById('templateEditor').value;
+            const testDataStr = document.getElementById('testData').value;
+            
+            if (!templateContent.trim()) {
+                showMessage('模板内容不能为空', 'error');
+                return;
+            }
+
+            let testData = {};
+            if (testDataStr.trim()) {
+                try {
+                    testData = JSON.parse(testDataStr);
+                } catch (error) {
+                    showMessage('测试数据JSON格式错误', 'error');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch('/api/simple-ai-templates/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        template_type: currentTemplate,
+                        template_content: templateContent,
+                        test_data: testData
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('testResult').textContent = data.result;
+                    showMessage('测试完成！', 'success');
+                } else {
+                    showMessage('测试失败：' + (data.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('测试失败：' + error.message, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

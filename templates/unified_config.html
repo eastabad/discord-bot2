@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一配置管理 - TDbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* 导航标签页 */
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px 15px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 0;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 18px 25px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            color: #495057;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #667eea;
+        }
+
+        .nav-tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        /* 标签内容区域 */
+        .tab-content {
+            background: white;
+            border-radius: 0 0 15px 15px;
+            padding: 35px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            min-height: 700px;
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 解析配置样式 */
+        .parsing-section h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .field-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .field-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .field-name {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .field-type {
+            font-size: 0.85em;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* AI模板配置样式 */
+        .template-section h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 10px;
+        }
+
+        .template-selector {
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .template-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .template-selector select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .template-selector select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+        }
+
+        .template-editor {
+            margin-bottom: 25px;
+        }
+
+        .template-editor label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .template-editor textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .template-editor textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            justify-content: center;
+        }
+
+        /* 状态消息 */
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status-info {
+            background: #cce7ff;
+            border: 1px solid #99d6ff;
+            color: #004085;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .field-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tab {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ 统一配置管理</h1>
+            <p>解析引擎配置 & AI模板配置</p>
+        </div>
+
+        <!-- 导航标签页 -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('parsing')">
+                📊 解析引擎配置
+            </button>
+            <button class="nav-tab" onclick="switchTab('templates')">
+                🤖 AI模板配置
+            </button>
+            <button class="nav-tab" onclick="switchTab('orderblock')">
+                📈 Order Block路由
+            </button>
+        </div>
+
+        <!-- 标签内容区域 -->
+        <div class="tab-content">
+            <!-- 解析配置标签页 -->
+            <div id="parsing-pane" class="tab-pane active">
+                <div class="parsing-section">
+                    <h2>🔧 字段解析配置</h2>
+                    <p style="color: #6c757d; margin-bottom: 30px;">
+                        配置TradingView webhook数据的解析规则和输出格式
+                    </p>
+
+                    <div class="loading" id="parsing-loading">
+                        <div class="spinner"></div>
+                        <p>加载字段配置中...</p>
+                    </div>
+
+                    <div class="status-message" id="parsing-status"></div>
+
+                    <div class="field-grid" id="parsing-fields">
+                        <!-- 解析字段将通过JavaScript动态加载 -->
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="saveParsingConfig()">
+                            💾 保存解析配置
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetParsingConfig()">
+                            🔄 重置配置
+                        </button>
+                        <button class="btn btn-success" onclick="testParsingConfig()">
+                            🧪 测试解析
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI模板配置标签页 -->
+            <div id="templates-pane" class="tab-pane">
+                <div class="template-section">
+                    <h2>🤖 AI提示模板配置</h2>
+                    <p style="color: #6c757d; margin-bottom: 30px;">
+                        管理不同类型请求的AI分析模板
+                    </p>
+
+                    <div class="loading" id="template-loading">
+                        <div class="spinner"></div>
+                        <p>加载模板配置中...</p>
+                    </div>
+
+                    <div class="status-message" id="template-status"></div>
+
+                    <div class="template-selector">
+                        <label for="template-select">选择模板类型:</label>
+                        <select id="template-select" onchange="loadTemplate()">
+                            <option value="">-- 请选择模板类型 --</option>
+                            <option value="chart_analysis">图表分析 (CT)</option>
+                            <option value="report_analysis">报告分析 (RP)</option>
+                            <option value="image_analysis">图片分析 (IMG)</option>
+                            <option value="prediction_analysis">预测分析 (PRED)</option>
+                        </select>
+                    </div>
+
+                    <div class="template-editor">
+                        <label for="template-content">模板内容:</label>
+                        <textarea id="template-content" placeholder="请选择模板类型后编辑..."></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="saveTemplate()">
+                            💾 保存模板
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetTemplate()">
+                            🔄 重置模板
+                        </button>
+                        <button class="btn btn-success" onclick="previewTemplate()">
+                            👁️ 预览效果
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Block路由配置标签页 -->
+            <div id="orderblock-pane" class="tab-pane">
+                <div class="orderblock-section">
+                    <h2>📈 Order Block Ticker路由配置</h2>
+                    <p style="color: #6c757d; margin-bottom: 30px;">
+                        配置Order Block信号的ticker到Discord频道的路由映射，支持一个ticker对应多个频道
+                    </p>
+
+                    <div class="loading" id="orderblock-loading">
+                        <div class="spinner"></div>
+                        <p>加载路由配置中...</p>
+                    </div>
+
+                    <div class="status-message" id="orderblock-status"></div>
+
+                    <!-- 添加新路由表单 -->
+                    <div class="form-card">
+                        <h3>➕ 添加新的Ticker路由</h3>
+                        <div class="form-group">
+                            <label for="ticker-input">Ticker代码:</label>
+                            <input type="text" id="ticker-input" placeholder="例如: NASDAQ:TSLA" 
+                                   style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                            <small style="color: #6c757d;">格式: EXCHANGE:SYMBOL (例如: NASDAQ:TSLA, NYSE:SPY)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="channels-input">频道ID列表: <span style="color: #28a745; font-weight: bold;">✏️ 可编辑</span></label>
+                            <textarea id="channels-input" placeholder="输入一个或多个频道ID，用逗号、空格或换行分隔&#10;例如:&#10;1404532905916760125&#10;1234567890123456789&#10;或: 1404532905916760125, 1234567890123456789"
+                                    style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; min-height: 100px; resize: vertical; transition: all 0.3s ease;"></textarea>
+                            <small style="color: #6c757d;">💡 提示：支持多个频道ID，用逗号、空格或换行分隔。点击编辑按钮后可直接修改此字段。</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description-input">描述 (可选):</label>
+                            <input type="text" id="description-input" placeholder="例如: 特斯拉股票Order Block信号" 
+                                   style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-primary" onclick="addOrderBlockRoute()" id="add-route-btn">
+                                ➕ 添加路由
+                            </button>
+                            <button class="btn btn-success" onclick="testOrderBlockWebhook()">
+                                🧪 测试Webhook
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearForm()" style="display: none;" id="clear-form-btn">
+                                🗑️ 清空表单
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 现有路由列表 -->
+                    <div class="routes-list">
+                        <h3>📋 现有路由配置</h3>
+                        <div id="routes-container">
+                            <!-- 路由列表将通过JavaScript动态加载 -->
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="loadOrderBlockRoutes()">
+                            🔄 刷新列表
+                        </button>
+                        <button class="btn btn-info" onclick="exportOrderBlockConfig()">
+                            📥 导出配置
+                        </button>
+                        <button class="btn btn-warning" onclick="forceRefreshPage()">
+                            🔄 强制刷新页面
+                        </button>
+                        <button class="btn btn-success" onclick="debugCurrentData()">
+                            🐛 调试数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentParsingConfig = {};
+        let currentTemplateConfig = {};
+        let originalParsingConfig = {};
+        let originalTemplateConfig = {};
+
+        // 页面加载完成时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadParsingConfig();
+        });
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有标签页内容
+            const panes = document.querySelectorAll('.tab-pane');
+            panes.forEach(pane => pane.classList.remove('active'));
+            
+            // 移除所有标签的active状态
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // 显示选中的标签页内容
+            document.getElementById(tabName + '-pane').classList.add('active');
+            
+            // 添加选中标签的active状态
+            event.target.classList.add('active');
+            
+            // 根据标签页加载对应配置
+            if (tabName === 'parsing') {
+                loadParsingConfig();
+            } else if (tabName === 'templates') {
+                loadTemplateConfig();
+            } else if (tabName === 'orderblock') {
+                loadOrderBlockRoutes();
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(type, message, elementId) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.className = `status-message status-${type}`;
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // 显示加载状态
+        function showLoading(elementId, show) {
+            const loadingElement = document.getElementById(elementId);
+            loadingElement.style.display = show ? 'block' : 'none';
+        }
+
+        // =============== 解析配置相关函数 ===============
+
+        // 加载解析配置
+        async function loadParsingConfig() {
+            showLoading('parsing-loading', true);
+            
+            try {
+                const response = await fetch('/api/parsing-config');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentParsingConfig = data.config;
+                    originalParsingConfig = JSON.parse(JSON.stringify(data.config));
+                    renderParsingFields();
+                    showStatus('success', '字段配置加载成功', 'parsing-status');
+                } else {
+                    showStatus('error', `加载失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `加载失败: ${error.message}`, 'parsing-status');
+            } finally {
+                showLoading('parsing-loading', false);
+            }
+        }
+
+        // 渲染解析字段
+        function renderParsingFields() {
+            const container = document.getElementById('parsing-fields');
+            container.innerHTML = '';
+            
+            Object.entries(currentParsingConfig).forEach(([fieldName, fieldConfig]) => {
+                const fieldCard = document.createElement('div');
+                fieldCard.className = 'field-card';
+                fieldCard.innerHTML = `
+                    <div class="field-header">
+                        <div class="field-name">${fieldName}</div>
+                        <div class="field-type">${fieldConfig.type}</div>
+                    </div>
+                    <input 
+                        type="text" 
+                        class="field-input" 
+                        value="${fieldConfig.output_format || ''}"
+                        placeholder="输入输出格式..."
+                        onchange="updateParsingField('${fieldName}', this.value)"
+                    />
+                `;
+                container.appendChild(fieldCard);
+            });
+        }
+
+        // 更新解析字段
+        function updateParsingField(fieldName, value) {
+            if (currentParsingConfig[fieldName]) {
+                currentParsingConfig[fieldName].output_format = value;
+            }
+        }
+
+        // 保存解析配置
+        async function saveParsingConfig() {
+            try {
+                const response = await fetch('/api/parsing-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentParsingConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    originalParsingConfig = JSON.parse(JSON.stringify(currentParsingConfig));
+                    showStatus('success', '解析配置保存成功', 'parsing-status');
+                } else {
+                    showStatus('error', `保存失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `保存失败: ${error.message}`, 'parsing-status');
+            }
+        }
+
+        // 重置解析配置
+        function resetParsingConfig() {
+            if (confirm('确定要重置到上次保存的状态吗？')) {
+                currentParsingConfig = JSON.parse(JSON.stringify(originalParsingConfig));
+                renderParsingFields();
+                showStatus('info', '配置已重置', 'parsing-status');
+            }
+        }
+
+        // 测试解析配置
+        async function testParsingConfig() {
+            try {
+                const response = await fetch('/api/test-parsing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        config: currentParsingConfig,
+                        test_data: {
+                            symbol: 'AAPL',
+                            timeframe: '15m',
+                            action: 'buy',
+                            price: 150.50
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', `测试成功: ${data.result}`, 'parsing-status');
+                } else {
+                    showStatus('error', `测试失败: ${data.error}`, 'parsing-status');
+                }
+            } catch (error) {
+                showStatus('error', `测试失败: ${error.message}`, 'parsing-status');
+            }
+        }
+
+        // =============== AI模板配置相关函数 ===============
+
+        // 加载模板配置
+        async function loadTemplateConfig() {
+            showLoading('template-loading', true);
+            
+            try {
+                const response = await fetch('/api/ai-templates-unified');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTemplateConfig = data.templates || {};
+                    originalTemplateConfig = JSON.parse(JSON.stringify(currentTemplateConfig));
+                    showStatus('success', '模板配置加载成功', 'template-status');
+                } else {
+                    showStatus('error', `加载失败: ${data.error}`, 'template-status');
+                }
+            } catch (error) {
+                showStatus('error', `加载失败: ${error.message}`, 'template-status');
+            } finally {
+                showLoading('template-loading', false);
+            }
+        }
+
+        // 加载选中的模板
+        function loadTemplate() {
+            const selectElement = document.getElementById('template-select');
+            const templateType = selectElement.value;
+            const contentElement = document.getElementById('template-content');
+            
+            if (templateType && currentTemplateConfig[templateType]) {
+                contentElement.value = currentTemplateConfig[templateType].template || '';
+                contentElement.placeholder = `编辑${selectElement.options[selectElement.selectedIndex].text}模板...`;
+            } else {
+                contentElement.value = '';
+                contentElement.placeholder = '请选择模板类型后编辑...';
+            }
+        }
+
+        // 保存模板
+        async function saveTemplate() {
+            const templateType = document.getElementById('template-select').value;
+            const templateContent = document.getElementById('template-content').value;
+            
+            if (!templateType) {
+                showStatus('error', '请选择模板类型', 'template-status');
+                return;
+            }
+            
+            if (!templateContent.trim()) {
+                showStatus('error', '请输入模板内容', 'template-status');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ai-templates-unified', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template_type: templateType,
+                        template_content: templateContent
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 更新本地配置
+                    if (!currentTemplateConfig[templateType]) {
+                        currentTemplateConfig[templateType] = {};
+                    }
+                    currentTemplateConfig[templateType].template = templateContent;
+                    originalTemplateConfig = JSON.parse(JSON.stringify(currentTemplateConfig));
+                    
+                    showStatus('success', '模板保存成功', 'template-status');
+                } else {
+                    showStatus('error', `保存失败: ${data.error}`, 'template-status');
+                }
+            } catch (error) {
+                showStatus('error', `保存失败: ${error.message}`, 'template-status');
+            }
+        }
+
+        // 重置模板
+        function resetTemplate() {
+            const templateType = document.getElementById('template-select').value;
+            
+            if (!templateType) {
+                showStatus('error', '请选择模板类型', 'template-status');
+                return;
+            }
+            
+            if (confirm('确定要重置当前模板吗？')) {
+                const originalContent = originalTemplateConfig[templateType]?.template || '';
+                document.getElementById('template-content').value = originalContent;
+                showStatus('info', '模板已重置', 'template-status');
+            }
+        }
+
+        // 预览模板效果
+        function previewTemplate() {
+            const templateType = document.getElementById('template-select').value;
+            const templateContent = document.getElementById('template-content').value;
+            
+            if (!templateType || !templateContent.trim()) {
+                showStatus('error', '请选择模板类型并输入内容', 'template-status');
+                return;
+            }
+            
+            // 创建预览窗口
+            const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+            previewWindow.document.write(`
+                <html>
+                <head>
+                    <title>模板预览 - ${templateType}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', sans-serif; padding: 20px; line-height: 1.6; }
+                        .header { background: #667eea; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                        .content { background: #f8f9fa; padding: 20px; border-radius: 8px; white-space: pre-wrap; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>🤖 模板预览: ${document.querySelector('#template-select option:checked').text}</h2>
+                    </div>
+                    <div class="content">${templateContent.replace(/\n/g, '<br>')}</div>
+                </body>
+                </html>
+            `);
+        }
+
+        // =============== Order Block路由配置相关函数 ===============
+
+        // 加载Order Block路由配置
+        async function loadOrderBlockRoutes() {
+            showLoading('orderblock-loading', true);
+            
+            try {
+                // 添加时间戳避免缓存
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/orderblock-routes?t=${timestamp}`, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayOrderBlockRoutes(result.data);
+                    showStatus('success', `路由配置已刷新 (${result.data.length}个)`, 'orderblock-status');
+                } else {
+                    showStatus('error', `加载失败: ${result.error}`, 'orderblock-status');
+                }
+            } catch (error) {
+                showStatus('error', `网络错误: ${error.message}`, 'orderblock-status');
+            } finally {
+                showLoading('orderblock-loading', false);
+            }
+        }
+
+        // 显示Order Block路由列表
+        function displayOrderBlockRoutes(routes) {
+            const container = document.getElementById('routes-container');
+            
+            // 添加调试信息
+            console.log('displayOrderBlockRoutes called with data:', routes);
+            
+            if (routes.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">暂无路由配置</p>';
+                return;
+            }
+            
+            let html = '';
+            const timestamp = new Date().toLocaleTimeString();
+            routes.forEach((route, index) => {
+                const channelList = route.channel_ids.join(', ');
+                console.log(`Route ${route.ticker}: channel_ids =`, route.channel_ids);
+                html += `
+                    <div class="route-item" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px;" data-ticker="${route.ticker}" data-channels="${channelList}">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">
+                                    📊 ${route.ticker} <small style="color: #999;">更新: ${timestamp}</small>
+                                </h4>
+                                <p style="margin: 5px 0; color: #666;">
+                                    <strong>频道数量:</strong> ${route.channel_count} 个
+                                </p>
+                                <p style="margin: 5px 0; color: #666; word-break: break-all;">
+                                    <strong>频道ID:</strong> <code style="background: #f8f9fa; padding: 2px 4px; border-radius: 3px;">${channelList}</code>
+                                </p>
+                            </div>
+                            <div style="margin-left: 20px;">
+                                <button class="btn btn-sm btn-primary" onclick="editOrderBlockRoute('${route.ticker}', [${route.channel_ids.join(',')}])" 
+                                        style="margin-right: 8px; padding: 6px 12px; font-size: 12px;">
+                                    ✏️ 编辑
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteOrderBlockRoute('${route.ticker}')"
+                                        style="padding: 6px 12px; font-size: 12px;">
+                                    🗑️ 删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // 强制清除容器内容并重新设置
+            container.innerHTML = '';
+            setTimeout(() => {
+                container.innerHTML = html;
+            }, 10);
+        }
+
+        // 添加Order Block路由
+        async function addOrderBlockRoute() {
+            const ticker = document.getElementById('ticker-input').value.trim();
+            const channelsInput = document.getElementById('channels-input').value.trim();
+            const description = document.getElementById('description-input').value.trim();
+            
+            if (!ticker) {
+                showStatus('error', 'Ticker不能为空', 'orderblock-status');
+                return;
+            }
+            
+            if (!channelsInput) {
+                showStatus('error', '频道ID不能为空', 'orderblock-status');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/orderblock-routes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ticker: ticker,
+                        channel_ids: channelsInput,
+                        description: description
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('success', result.message, 'orderblock-status');
+                    // 清空表单并重置按钮状态
+                    clearForm();
+                    // 强制刷新路由列表，加延迟确保数据库已更新
+                    setTimeout(() => {
+                        loadOrderBlockRoutes();
+                    }, 500);
+                } else {
+                    showStatus('error', result.error, 'orderblock-status');
+                }
+            } catch (error) {
+                showStatus('error', `网络错误: ${error.message}`, 'orderblock-status');
+            }
+        }
+
+        // 编辑Order Block路由
+        function editOrderBlockRoute(ticker, channelIds) {
+            // 确保所有字段都可编辑
+            const tickerInput = document.getElementById('ticker-input');
+            const channelsInput = document.getElementById('channels-input');
+            const descriptionInput = document.getElementById('description-input');
+            
+            // 移除任何可能的readonly或disabled属性
+            [tickerInput, channelsInput, descriptionInput].forEach(element => {
+                element.removeAttribute('readonly');
+                element.removeAttribute('disabled');
+                element.style.backgroundColor = '';
+                element.style.cursor = 'text';
+            });
+            
+            // 设置值
+            tickerInput.value = ticker;
+            channelsInput.value = channelIds.join(', ');
+            descriptionInput.value = '';
+            
+            // 高亮编辑的字段
+            channelsInput.style.borderColor = '#007bff';
+            channelsInput.style.boxShadow = '0 0 5px rgba(0,123,255,0.3)';
+            
+            // 聚焦到频道ID输入框
+            channelsInput.focus();
+            channelsInput.select();
+            
+            // 更新按钮文本和显示清空按钮
+            const addBtn = document.getElementById('add-route-btn');
+            const clearBtn = document.getElementById('clear-form-btn');
+            addBtn.textContent = '💾 保存更改';
+            addBtn.className = 'btn btn-warning';
+            clearBtn.style.display = 'inline-block';
+            
+            // 滚动到表单区域
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+            showStatus('info', `正在编辑 ${ticker} - 请修改频道ID后点击"保存更改"`, 'orderblock-status');
+        }
+
+        // 清空表单
+        function clearForm() {
+            document.getElementById('ticker-input').value = '';
+            document.getElementById('channels-input').value = '';
+            document.getElementById('description-input').value = '';
+            
+            // 重置按钮状态
+            const addBtn = document.getElementById('add-route-btn');
+            const clearBtn = document.getElementById('clear-form-btn');
+            addBtn.textContent = '➕ 添加路由';
+            addBtn.className = 'btn btn-primary';
+            clearBtn.style.display = 'none';
+            
+            // 重置字段样式
+            const channelsInput = document.getElementById('channels-input');
+            channelsInput.style.borderColor = '';
+            channelsInput.style.boxShadow = '';
+            
+            showStatus('info', '表单已清空', 'orderblock-status');
+        }
+
+        // 删除Order Block路由
+        async function deleteOrderBlockRoute(ticker) {
+            if (!confirm(`确定要删除 ${ticker} 的路由配置吗？`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/orderblock-routes/${encodeURIComponent(ticker)}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('success', result.message, 'orderblock-status');
+                    // 强制刷新列表，加延迟确保数据库已更新
+                    setTimeout(() => {
+                        loadOrderBlockRoutes();
+                    }, 500);
+                } else {
+                    showStatus('error', result.error, 'orderblock-status');
+                }
+            } catch (error) {
+                showStatus('error', `网络错误: ${error.message}`, 'orderblock-status');
+            }
+        }
+
+        // 强制刷新页面
+        function forceRefreshPage() {
+            if (confirm('这将刷新整个页面，确定继续吗？')) {
+                window.location.reload(true);
+            }
+        }
+
+        // 调试当前数据
+        async function debugCurrentData() {
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/orderblock-routes?t=${timestamp}`, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                const result = await response.json();
+                
+                // 显示调试信息
+                const debugInfo = `当前时间: ${new Date().toLocaleString()}\n` +
+                                 `API响应: ${JSON.stringify(result, null, 2)}\n` +
+                                 `浏览器缓存状态: ${navigator.userAgent}\n` +
+                                 `当前URL: ${window.location.href}`;
+                
+                alert(debugInfo);
+                console.log('调试信息:', result);
+                
+                // 强制重新渲染
+                displayOrderBlockRoutes(result.data || []);
+                
+            } catch (error) {
+                alert(`调试失败: ${error.message}`);
+                console.error('调试错误:', error);
+            }
+        }
+
+        // 测试Order Block Webhook
+        async function testOrderBlockWebhook() {
+            const ticker = document.getElementById('ticker-input').value.trim() || 'NASDAQ:TSLA';
+            
+            try {
+                showStatus('info', '正在发送测试信号...', 'orderblock-status');
+                
+                const response = await fetch('/api/test-orderblock-webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ticker: ticker,
+                        event: 'New Bullish OB Formed'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('success', result.message, 'orderblock-status');
+                } else {
+                    showStatus('error', result.error, 'orderblock-status');
+                }
+            } catch (error) {
+                showStatus('error', `测试失败: ${error.message}`, 'orderblock-status');
+            }
+        }
+
+        // 导出Order Block配置
+        async function exportOrderBlockConfig() {
+            try {
+                const response = await fetch('/api/orderblock-routes');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const configData = {
+                        orderblock_routes: result.data,
+                        export_time: new Date().toISOString(),
+                        version: '1.0'
+                    };
+                    
+                    const dataStr = JSON.stringify(configData, null, 2);
+                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                    
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(dataBlob);
+                    link.download = `orderblock_routes_${new Date().toISOString().split('T')[0]}.json`;
+                    link.click();
+                    
+                    showStatus('success', 'Order Block配置导出成功', 'orderblock-status');
+                } else {
+                    showStatus('error', `导出失败: ${result.error}`, 'orderblock-status');
+                }
+            } catch (error) {
+                showStatus('error', `导出失败: ${error.message}`, 'orderblock-status');
+            }
+        }
+    </script>
+</body>
+</html>

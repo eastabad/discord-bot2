@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解析引擎配置管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .field-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .field-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .field-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .field-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .field-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-success {
+            background: #38a169;
+            color: white;
+        }
+
+        .conditions-list {
+            margin-top: 10px;
+        }
+
+        .condition-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .condition-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .condition-type {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .condition-remove {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .condition-preview {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #6c757d;
+        }
+
+        .add-condition-btn {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .json-editor {
+            width: 100%;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 解析引擎配置管理</h1>
+            <p>配置字段解析规则，自定义判断条件和输出内容</p>
+        </div>
+
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('visual')">可视化配置</button>
+            <button class="nav-tab" onclick="showTab('json')">JSON编辑</button>
+            <button class="nav-tab" onclick="showTab('test')">测试解析</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- 可视化配置面板 -->
+            <div class="tab-pane active" id="visual-tab">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>字段解析规则</h3>
+                    <div>
+                        <button class="btn btn-success" onclick="addNewField()">+ 新增字段</button>
+                        <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+                    </div>
+                </div>
+                <div class="field-list" id="fieldList">
+                    <!-- 字段列表将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- JSON编辑面板 -->
+            <div class="tab-pane" id="json-tab">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>JSON配置编辑</h3>
+                    <div>
+                        <button class="btn btn-primary" onclick="saveJsonConfig()">保存JSON配置</button>
+                        <button class="btn btn-secondary" onclick="loadConfig()">重新加载</button>
+                    </div>
+                </div>
+                <textarea class="json-editor" id="jsonEditor" placeholder="JSON配置将在这里显示..."></textarea>
+            </div>
+
+            <!-- 测试面板 -->
+            <div class="tab-pane" id="test-tab">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>解析测试</h3>
+                    <button class="btn btn-primary" onclick="testParsing()">执行测试</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4>测试数据 (JSON格式)</h4>
+                        <textarea id="testData" rows="15" style="width: 100%; font-family: monospace; padding: 10px; border-radius: 6px;">
+{
+  "ticker": "TSLA",
+  "CVDsignal": "cvdAboveMA",
+  "pmaText": "PMA Strong Bullish",
+  "signal": "BUY",
+  "close": "250.45",
+  "timeframe": "1H"
+}</textarea>
+                    </div>
+                    <div>
+                        <h4>解析结果</h4>
+                        <div id="parseResults" style="background: #f8f9fa; padding: 15px; border-radius: 6px; min-height: 300px; font-family: monospace; white-space: pre-wrap;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字段编辑模态框 -->
+    <div id="fieldModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">编辑字段</h3>
+                <span class="close" onclick="closeFieldModal()">&times;</span>
+            </div>
+            
+            <div class="form-group">
+                <label>字段名称</label>
+                <input type="text" id="fieldName" placeholder="例如: CVDsignal">
+            </div>
+            
+            <div class="form-group">
+                <label>字段描述</label>
+                <input type="text" id="fieldDescription" placeholder="例如: CVD信号解析">
+            </div>
+            
+            <div class="form-group">
+                <label>默认输出</label>
+                <input type="text" id="fieldDefaultOutput" placeholder="当没有匹配条件时的输出">
+            </div>
+            
+            <h4>判断条件</h4>
+            <div id="conditionsList">
+                <!-- 条件列表将在这里动态生成 -->
+            </div>
+            
+            <button class="add-condition-btn" onclick="addCondition()">+ 添加新条件</button>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn btn-secondary" onclick="closeFieldModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveField()">保存字段</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = {};
+        let editingFieldIndex = -1;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+        });
+
+        // 显示提示信息
+        function showAlert(message, type = 'success') {
+            const alertElement = document.getElementById(type === 'success' ? 'successAlert' : 'errorAlert');
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // 切换标签页
+        function showTab(tabName) {
+            // 切换标签按钮状态
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 切换内容面板
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // 如果切换到JSON编辑，更新JSON内容
+            if (tabName === 'json') {
+                document.getElementById('jsonEditor').value = JSON.stringify(currentConfig, null, 2);
+            }
+        }
+
+        // 加载配置
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/parsing-config');
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentConfig = result.data;
+                    renderFieldList();
+                    document.getElementById('jsonEditor').value = JSON.stringify(currentConfig, null, 2);
+                } else {
+                    showAlert('加载配置失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('加载配置失败: ' + error.message, 'error');
+            }
+        }
+
+        // 渲染字段列表
+        function renderFieldList() {
+            const fieldList = document.getElementById('fieldList');
+            fieldList.innerHTML = '';
+            
+            const fields = currentConfig.fields || {};
+            
+            Object.keys(fields).forEach((fieldName, index) => {
+                const field = fields[fieldName];
+                const fieldCard = document.createElement('div');
+                fieldCard.className = 'field-card';
+                
+                fieldCard.innerHTML = `
+                    <div class="field-header">
+                        <div>
+                            <div class="field-name">${fieldName}</div>
+                            <div style="color: #6c757d; font-size: 14px;">${field.description || '无描述'}</div>
+                        </div>
+                        <div class="field-actions">
+                            <button class="btn btn-primary" onclick="editField('${fieldName}')">编辑</button>
+                            <button class="btn btn-danger" onclick="deleteField('${fieldName}')">删除</button>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>条件数量:</strong> ${(field.conditions || []).length} 个
+                        <br>
+                        <strong>默认输出:</strong> ${field.default_output || '无'}
+                    </div>
+                `;
+                
+                fieldList.appendChild(fieldCard);
+            });
+        }
+
+        // 新增字段
+        function addNewField() {
+            editingFieldIndex = -1;
+            document.getElementById('modalTitle').textContent = '新增字段';
+            document.getElementById('fieldName').value = '';
+            document.getElementById('fieldDescription').value = '';
+            document.getElementById('fieldDefaultOutput').value = '';
+            document.getElementById('conditionsList').innerHTML = '';
+            document.getElementById('fieldModal').style.display = 'block';
+        }
+
+        // 编辑字段
+        function editField(fieldName) {
+            editingFieldIndex = fieldName;
+            const field = currentConfig.fields[fieldName];
+            
+            document.getElementById('modalTitle').textContent = '编辑字段: ' + fieldName;
+            document.getElementById('fieldName').value = fieldName;
+            document.getElementById('fieldDescription').value = field.description || '';
+            document.getElementById('fieldDefaultOutput').value = field.default_output || '';
+            
+            renderConditionsList(field.conditions || []);
+            document.getElementById('fieldModal').style.display = 'block';
+        }
+
+        // 删除字段
+        function deleteField(fieldName) {
+            if (confirm(`确定要删除字段 "${fieldName}" 吗？`)) {
+                delete currentConfig.fields[fieldName];
+                renderFieldList();
+                showAlert(`字段 "${fieldName}" 已删除`);
+            }
+        }
+
+        // 渲染条件列表
+        function renderConditionsList(conditions) {
+            const conditionsList = document.getElementById('conditionsList');
+            conditionsList.innerHTML = '';
+            
+            conditions.forEach((condition, index) => {
+                const conditionDiv = document.createElement('div');
+                conditionDiv.className = 'condition-item';
+                conditionDiv.innerHTML = `
+                    <button class="condition-remove" onclick="removeCondition(${index})">&times;</button>
+                    <div class="form-group">
+                        <label>条件类型</label>
+                        <select onchange="updateCondition(${index}, 'type', this.value)">
+                            <option value="equals" ${condition.type === 'equals' ? 'selected' : ''}>等于</option>
+                            <option value="contains" ${condition.type === 'contains' ? 'selected' : ''}>包含</option>
+                            <option value="starts_with" ${condition.type === 'starts_with' ? 'selected' : ''}>开头是</option>
+                            <option value="ends_with" ${condition.type === 'ends_with' ? 'selected' : ''}>结尾是</option>
+                            <option value="greater_than" ${condition.type === 'greater_than' ? 'selected' : ''}>大于</option>
+                            <option value="less_than" ${condition.type === 'less_than' ? 'selected' : ''}>小于</option>
+                            <option value="range" ${condition.type === 'range' ? 'selected' : ''}>范围内</option>
+                            <option value="regex" ${condition.type === 'regex' ? 'selected' : ''}>正则表达式</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>条件值</label>
+                        <input type="text" value="${JSON.stringify(condition.value)}" 
+                               onchange="updateCondition(${index}, 'value', this.value)" 
+                               placeholder="输入条件值">
+                    </div>
+                    <div class="form-group">
+                        <label>输出内容</label>
+                        <textarea onchange="updateCondition(${index}, 'output', this.value)" 
+                                  placeholder="当条件匹配时输出的文本">${condition.output || ''}</textarea>
+                    </div>
+                `;
+                conditionsList.appendChild(conditionDiv);
+            });
+        }
+
+        // 当前编辑的条件列表
+        let currentConditions = [];
+
+        // 添加条件
+        function addCondition() {
+            currentConditions.push({
+                type: 'equals',
+                value: '',
+                output: ''
+            });
+            renderConditionsList(currentConditions);
+        }
+
+        // 移除条件
+        function removeCondition(index) {
+            currentConditions.splice(index, 1);
+            renderConditionsList(currentConditions);
+        }
+
+        // 更新条件
+        function updateCondition(index, field, value) {
+            if (field === 'value') {
+                try {
+                    currentConditions[index][field] = JSON.parse(value);
+                } catch (e) {
+                    currentConditions[index][field] = value;
+                }
+            } else {
+                currentConditions[index][field] = value;
+            }
+        }
+
+        // 保存字段
+        function saveField() {
+            const fieldName = document.getElementById('fieldName').value.trim();
+            const fieldDescription = document.getElementById('fieldDescription').value.trim();
+            const fieldDefaultOutput = document.getElementById('fieldDefaultOutput').value.trim();
+            
+            if (!fieldName) {
+                showAlert('请输入字段名称', 'error');
+                return;
+            }
+            
+            // 如果是新字段，检查是否已存在
+            if (editingFieldIndex === -1 && currentConfig.fields[fieldName]) {
+                showAlert('字段名称已存在', 'error');
+                return;
+            }
+            
+            // 如果是重命名字段
+            if (editingFieldIndex !== -1 && editingFieldIndex !== fieldName) {
+                delete currentConfig.fields[editingFieldIndex];
+            }
+            
+            currentConfig.fields[fieldName] = {
+                description: fieldDescription,
+                conditions: currentConditions,
+                default_output: fieldDefaultOutput
+            };
+            
+            closeFieldModal();
+            renderFieldList();
+            showAlert('字段保存成功');
+        }
+
+        // 关闭字段模态框
+        function closeFieldModal() {
+            document.getElementById('fieldModal').style.display = 'none';
+            currentConditions = [];
+        }
+
+        // 保存配置
+        async function saveConfig() {
+            try {
+                const response = await fetch('/api/parsing-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentConfig)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('配置保存成功');
+                } else {
+                    showAlert('保存失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('保存失败: ' + error.message, 'error');
+            }
+        }
+
+        // 保存JSON配置
+        async function saveJsonConfig() {
+            try {
+                const jsonText = document.getElementById('jsonEditor').value;
+                const newConfig = JSON.parse(jsonText);
+                
+                const response = await fetch('/api/parsing-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newConfig)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentConfig = newConfig;
+                    renderFieldList();
+                    showAlert('JSON配置保存成功');
+                } else {
+                    showAlert('保存失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('JSON格式错误: ' + error.message, 'error');
+            }
+        }
+
+        // 测试解析
+        async function testParsing() {
+            try {
+                const testData = JSON.parse(document.getElementById('testData').value);
+                
+                const response = await fetch('/api/test-parsing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('parseResults').textContent = JSON.stringify(result.results, null, 2);
+                } else {
+                    document.getElementById('parseResults').textContent = '解析失败: ' + result.error;
+                }
+            } catch (error) {
+                document.getElementById('parseResults').textContent = '测试失败: ' + error.message;
+            }
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('fieldModal');
+            if (event.target == modal) {
+                closeFieldModal();
+            }
+        }
+
+        // 页面加载时设置当前条件
+        function editField(fieldName) {
+            editingFieldIndex = fieldName;
+            const field = currentConfig.fields[fieldName];
+            currentConditions = JSON.parse(JSON.stringify(field.conditions || [])); // 深拷贝
+            
+            document.getElementById('modalTitle').textContent = '编辑字段: ' + fieldName;
+            document.getElementById('fieldName').value = fieldName;
+            document.getElementById('fieldDescription').value = field.description || '';
+            document.getElementById('fieldDefaultOutput').value = field.default_output || '';
+            
+            renderConditionsList(currentConditions);
+            document.getElementById('fieldModal').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

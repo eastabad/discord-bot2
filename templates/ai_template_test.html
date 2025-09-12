@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI模板测试中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .form-select, .form-textarea, .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-select:focus, .form-textarea:focus, .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #38a169;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f56500;
+            color: white;
+        }
+
+        .result-panel {
+            grid-column: span 2;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .result-content {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .quick-test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success { background: #38a169; }
+        .status-error { background: #e53e3e; }
+        .status-warning { background: #f56500; }
+
+        .json-editor {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+            border: none;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .variable-list {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .variable-item {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .variable-item:hover {
+            background: #bbdefb;
+        }
+
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-panel {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI模板测试中心</h1>
+            <p>测试和验证AI提示词模板，实时预览生成效果</p>
+            <div style="margin-top: 15px;">
+                <a href="/parsing" style="color: white; text-decoration: none; margin: 0 10px; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 5px;">📊 解析配置</a>
+                <a href="/setting" style="color: white; text-decoration: none; margin: 0 10px; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 5px;">⚙️ 信号翻译</a>
+                <a href="/" style="color: white; text-decoration: none; margin: 0 10px; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 5px;">🏠 API首页</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('template-test')">模板测试</button>
+                <button class="tab" onclick="switchTab('data-simulation')">数据模拟</button>
+                <button class="tab" onclick="switchTab('batch-test')">批量测试</button>
+                <button class="tab" onclick="switchTab('template-manager')">模板管理</button>
+            </div>
+
+            <!-- 模板测试标签页 -->
+            <div id="template-test" class="tab-content active">
+                <div class="test-grid">
+                    <div class="test-section">
+                        <div class="section-title">🎯 模板选择与配置</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">命令类型</label>
+                            <select id="commandType" class="form-select" onchange="loadTemplates()">
+                                <option value="">请选择命令类型</option>
+                                <option value="CT">CT - 图表分析</option>
+                                <option value="RP">RP - 报告生成</option>
+                                <option value="IMAGE">IMAGE - 图像分析</option>
+                                <option value="PREDICT">PREDICT - 预测分析</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">选择模板</label>
+                            <select id="templateSelect" class="form-select" onchange="loadTemplateContent()">
+                                <option value="">请先选择命令类型</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">模板内容预览</label>
+                            <textarea id="templateContent" class="form-textarea" rows="8" readonly 
+                                placeholder="选择模板后将显示内容..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">可用变量</label>
+                            <div id="availableVariables" class="variable-list">
+                                <div class="variable-item">{ticker}</div>
+                                <div class="variable-item">{parsed_summary}</div>
+                                <div class="variable-item">{analysis_summary}</div>
+                                <div class="variable-item">{signal_parsed}</div>
+                                <div class="variable-item">{close_parsed}</div>
+                                <div class="variable-item">{timeframe_parsed}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="test-section">
+                        <div class="section-title">📊 测试数据输入</div>
+                        
+                        <div class="quick-test-buttons">
+                            <button class="btn btn-secondary" onclick="loadSampleData('bullish')">看涨样本</button>
+                            <button class="btn btn-secondary" onclick="loadSampleData('bearish')">看跌样本</button>
+                            <button class="btn btn-secondary" onclick="loadSampleData('neutral')">中性样本</button>
+                            <button class="btn btn-warning" onclick="clearTestData()">清空数据</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">测试数据 (JSON格式)</label>
+                            <textarea id="testData" class="form-textarea json-editor" rows="12" 
+                                placeholder='输入测试数据，例如:
+{
+  "ticker": "TSLA",
+  "CVDsignal": "cvdAboveMA",
+  "pmaText": "PMA Strong Bullish",
+  "signal": "BUY",
+  "close": "250.45",
+  "timeframe": "1H"
+}'></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="runTemplateTest()">
+                                🚀 运行模板测试
+                            </button>
+                            <button class="btn btn-success" onclick="runParsingTest()">
+                                🔍 测试解析结果
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="result-panel">
+                        <div class="section-title">📋 测试结果</div>
+                        <div id="testResults" class="result-content">
+等待测试结果...
+
+点击"运行模板测试"查看AI提示词生成结果
+点击"测试解析结果"查看数据解析结果
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据模拟标签页 -->
+            <div id="data-simulation" class="tab-content">
+                <div class="test-grid">
+                    <div class="test-section">
+                        <div class="section-title">🎲 数据生成器</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">股票代码</label>
+                            <input type="text" id="simTicker" class="form-input" value="AAPL" placeholder="如: AAPL, TSLA, NVDA">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">信号类型</label>
+                            <select id="simSignal" class="form-select">
+                                <option value="BUY">BUY - 买入信号</option>
+                                <option value="SELL">SELL - 卖出信号</option>
+                                <option value="HOLD">HOLD - 持有观望</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">PMA趋势</label>
+                            <select id="simPMA" class="form-select">
+                                <option value="PMA Strong Bullish">PMA Strong Bullish</option>
+                                <option value="PMA Bullish">PMA Bullish</option>
+                                <option value="PMA Neutral">PMA Neutral</option>
+                                <option value="PMA Bearish">PMA Bearish</option>
+                                <option value="PMA Strong Bearish">PMA Strong Bearish</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">CVD信号</label>
+                            <select id="simCVD" class="form-select">
+                                <option value="cvdAboveMA">cvdAboveMA - 资金流入</option>
+                                <option value="cvdBelowMA">cvdBelowMA - 资金流出</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">时间框架</label>
+                            <select id="simTimeframe" class="form-select">
+                                <option value="1H">1H - 1小时</option>
+                                <option value="4H">4H - 4小时</option>
+                                <option value="1D">1D - 日线</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="generateSimulatedData()">
+                                🎯 生成模拟数据
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="test-section">
+                        <div class="section-title">📈 价格与指标</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">当前价格</label>
+                            <input type="number" id="simPrice" class="form-input" value="150.50" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">成交量</label>
+                            <input type="number" id="simVolume" class="form-input" value="1250000">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">RSI值</label>
+                            <input type="number" id="simRSI" class="form-input" value="65.4" min="0" max="100" step="0.1">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">附加信息</label>
+                            <textarea id="simMessage" class="form-textarea" rows="4" 
+                                placeholder="可选：附加的市场信息或分析"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn-success" onclick="applySimulatedData()">
+                                ✅ 应用到测试数据
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 批量测试标签页 -->
+            <div id="batch-test" class="tab-content">
+                <div class="test-section">
+                    <div class="section-title">🔄 批量测试配置</div>
+                    <p>批量测试功能正在开发中...</p>
+                </div>
+            </div>
+
+            <!-- 模板管理标签页 -->
+            <div id="template-manager" class="tab-content">
+                <div class="test-section">
+                    <div class="section-title">⚙️ 模板管理</div>
+                    <p>请访问 <a href="/setting" target="_blank">设置页面</a> 进行AI模板的创建和编辑</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplates = [];
+        let parsedResults = {};
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的active类
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName).classList.add('active');
+            
+            // 激活对应的标签
+            event.target.classList.add('active');
+        }
+
+        // 加载模板列表
+        async function loadTemplates() {
+            const commandType = document.getElementById('commandType').value;
+            const templateSelect = document.getElementById('templateSelect');
+            
+            if (!commandType) {
+                templateSelect.innerHTML = '<option value="">请先选择命令类型</option>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/ai-templates');
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentTemplates = result.data.filter(t => t.command_type === commandType);
+                    
+                    templateSelect.innerHTML = '<option value="">请选择模板</option>';
+                    currentTemplates.forEach((template, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${template.template_name} - ${template.description || ''}`;
+                        templateSelect.appendChild(option);
+                    });
+                    
+                    if (currentTemplates.length === 0) {
+                        templateSelect.innerHTML = '<option value="">该类型暂无模板</option>';
+                    }
+                } else {
+                    templateSelect.innerHTML = '<option value="">加载失败</option>';
+                }
+            } catch (error) {
+                console.error('加载模板失败:', error);
+                templateSelect.innerHTML = '<option value="">加载错误</option>';
+            }
+        }
+
+        // 加载模板内容
+        function loadTemplateContent() {
+            const templateIndex = document.getElementById('templateSelect').value;
+            const templateContent = document.getElementById('templateContent');
+            
+            if (templateIndex === '') {
+                templateContent.value = '';
+                return;
+            }
+            
+            const template = currentTemplates[templateIndex];
+            if (template) {
+                templateContent.value = template.template_content || '';
+            }
+        }
+
+        // 加载样本数据
+        function loadSampleData(type) {
+            const testData = document.getElementById('testData');
+            
+            const samples = {
+                bullish: {
+                    ticker: "TSLA",
+                    CVDsignal: "cvdAboveMA",
+                    pmaText: "PMA Strong Bullish",
+                    signal: "BUY",
+                    close: "250.45",
+                    timeframe: "1H",
+                    volume: "1250000",
+                    rsi: "72.5"
+                },
+                bearish: {
+                    ticker: "AAPL",
+                    CVDsignal: "cvdBelowMA",
+                    pmaText: "PMA Strong Bearish",
+                    signal: "SELL",
+                    close: "175.20",
+                    timeframe: "4H",
+                    volume: "890000",
+                    rsi: "28.3"
+                },
+                neutral: {
+                    ticker: "NVDA",
+                    CVDsignal: "cvdNeutral",
+                    pmaText: "PMA Neutral",
+                    signal: "HOLD",
+                    close: "420.80",
+                    timeframe: "1D",
+                    volume: "650000",
+                    rsi: "50.1"
+                }
+            };
+            
+            testData.value = JSON.stringify(samples[type], null, 2);
+        }
+
+        // 清空测试数据
+        function clearTestData() {
+            document.getElementById('testData').value = '';
+            document.getElementById('testResults').textContent = '等待测试结果...';
+        }
+
+        // 运行模板测试
+        async function runTemplateTest() {
+            const commandType = document.getElementById('commandType').value;
+            const testDataText = document.getElementById('testData').value;
+            const resultsDiv = document.getElementById('testResults');
+            
+            if (!commandType) {
+                resultsDiv.textContent = '❌ 请先选择命令类型';
+                return;
+            }
+            
+            if (!testDataText.trim()) {
+                resultsDiv.textContent = '❌ 请输入测试数据';
+                return;
+            }
+            
+            try {
+                const testData = JSON.parse(testDataText);
+                
+                resultsDiv.textContent = '🔄 正在生成AI提示词...';
+                
+                // 模拟AI模板生成（实际应该调用后端API）
+                const response = await fetch('/api/test-ai-template', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        command_type: commandType,
+                        data: testData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.textContent = `✅ AI提示词生成成功！\n\n生成的提示词：\n${result.prompt}`;
+                } else {
+                    resultsDiv.textContent = `❌ 生成失败: ${result.error}`;
+                }
+                
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    resultsDiv.textContent = '❌ JSON格式错误，请检查测试数据格式';
+                } else {
+                    resultsDiv.textContent = `❌ 测试失败: ${error.message}`;
+                }
+            }
+        }
+
+        // 运行解析测试
+        async function runParsingTest() {
+            const testDataText = document.getElementById('testData').value;
+            const resultsDiv = document.getElementById('testResults');
+            
+            if (!testDataText.trim()) {
+                resultsDiv.textContent = '❌ 请输入测试数据';
+                return;
+            }
+            
+            try {
+                const testData = JSON.parse(testDataText);
+                
+                resultsDiv.textContent = '🔄 正在解析数据...';
+                
+                const response = await fetch('/api/test-parsing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const { parsed_fields, summary_text, original_data } = result.results;
+                    
+                    let output = '✅ 数据解析成功！\n\n';
+                    output += '=== 原始数据 ===\n';
+                    output += JSON.stringify(original_data, null, 2) + '\n\n';
+                    output += '=== 解析结果 ===\n';
+                    
+                    for (const [key, value] of Object.entries(parsed_fields)) {
+                        output += `${key}: ${value}\n`;
+                    }
+                    
+                    output += '\n=== 汇总文本 ===\n';
+                    output += summary_text;
+                    
+                    resultsDiv.textContent = output;
+                    parsedResults = parsed_fields;
+                } else {
+                    resultsDiv.textContent = `❌ 解析失败: ${result.error}`;
+                }
+                
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    resultsDiv.textContent = '❌ JSON格式错误，请检查测试数据格式';
+                } else {
+                    resultsDiv.textContent = `❌ 解析失败: ${error.message}`;
+                }
+            }
+        }
+
+        // 生成模拟数据
+        function generateSimulatedData() {
+            const ticker = document.getElementById('simTicker').value;
+            const signal = document.getElementById('simSignal').value;
+            const pmaText = document.getElementById('simPMA').value;
+            const cvdSignal = document.getElementById('simCVD').value;
+            const timeframe = document.getElementById('simTimeframe').value;
+            const price = document.getElementById('simPrice').value;
+            const volume = document.getElementById('simVolume').value;
+            const rsi = document.getElementById('simRSI').value;
+            const message = document.getElementById('simMessage').value;
+            
+            const simulatedData = {
+                ticker: ticker,
+                signal: signal,
+                pmaText: pmaText,
+                CVDsignal: cvdSignal,
+                timeframe: timeframe,
+                close: price,
+                volume: volume,
+                rsi: rsi
+            };
+            
+            if (message.trim()) {
+                simulatedData.message = message;
+            }
+            
+            // 显示生成的数据
+            alert('模拟数据生成完成！点击"应用到测试数据"按钮将数据载入测试区域。');
+        }
+
+        // 应用模拟数据
+        function applySimulatedData() {
+            generateSimulatedData();
+            
+            const ticker = document.getElementById('simTicker').value;
+            const signal = document.getElementById('simSignal').value;
+            const pmaText = document.getElementById('simPMA').value;
+            const cvdSignal = document.getElementById('simCVD').value;
+            const timeframe = document.getElementById('simTimeframe').value;
+            const price = document.getElementById('simPrice').value;
+            const volume = document.getElementById('simVolume').value;
+            const rsi = document.getElementById('simRSI').value;
+            const message = document.getElementById('simMessage').value;
+            
+            const simulatedData = {
+                ticker: ticker,
+                signal: signal,
+                pmaText: pmaText,
+                CVDsignal: cvdSignal,
+                timeframe: timeframe,
+                close: price,
+                volume: volume,
+                rsi: rsi
+            };
+            
+            if (message.trim()) {
+                simulatedData.message = message;
+            }
+            
+            // 切换到模板测试标签页并应用数据
+            switchTab('template-test');
+            document.querySelector('[onclick="switchTab(\'template-test\')"]').click();
+            document.getElementById('testData').value = JSON.stringify(simulatedData, null, 2);
+            
+            alert('数据已应用到测试区域！');
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 可以在这里进行初始化操作
+        });
+    </script>
+</body>
+</html>

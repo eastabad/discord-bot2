@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "description": "简化字段配置 - 硬编码逻辑，只允许编辑输出文本",
+  "last_updated": "2025-08-28T23:21:20.283841",
+  "fields": {
+    "test_field": {
+      "logic": "test",
+      "outputs": {
+        "test": "测试输出"
+      }
+    }
+  },
+  "updated_at": "2025-08-29T00:55:59.043884"
+}

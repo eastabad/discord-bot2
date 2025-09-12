@@ -1,0 +1,163 @@
+[
+  {
+    "signal_type": "CVDsignal",
+    "signal_value": "cvdAboveMA",
+    "chinese_description": "CVD 高于移动平均线 (买压增加，资金流入)",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "CVDsignal",
+    "signal_value": "cvdBelowMA",
+    "chinese_description": "CVD 低于移动平均线 (卖压增加，资金流出)",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "pmaText",
+    "signal_value": "PMA Strong Bullish",
+    "chinese_description": "PMA 强烈看涨",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "pmaText",
+    "signal_value": "PMA Bullish",
+    "chinese_description": "PMA 看涨",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "pmaText",
+    "signal_value": "PMA Trendless",
+    "chinese_description": "PMA 无明确趋势",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "pmaText",
+    "signal_value": "PMA Bearish",
+    "chinese_description": "PMA 看跌",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "pmaText",
+    "signal_value": "PMA Strong Bearish",
+    "chinese_description": "PMA 强烈看跌",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "trendSignal",
+    "signal_value": "STRONG_BULLISH",
+    "chinese_description": "强烈看涨趋势",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "trendSignal",
+    "signal_value": "BULLISH",
+    "chinese_description": "看涨趋势",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "trendSignal",
+    "signal_value": "NEUTRAL",
+    "chinese_description": "中性趋势",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "trendSignal",
+    "signal_value": "BEARISH",
+    "chinese_description": "看跌趋势",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "trendSignal",
+    "signal_value": "STRONG_BEARISH",
+    "chinese_description": "强烈看跌趋势",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signalStrength",
+    "signal_value": "VERY_STRONG",
+    "chinese_description": "非常强",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signalStrength",
+    "signal_value": "STRONG",
+    "chinese_description": "强",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signalStrength",
+    "signal_value": "MODERATE",
+    "chinese_description": "中等",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signalStrength",
+    "signal_value": "WEAK",
+    "chinese_description": "弱",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signalStrength",
+    "signal_value": "VERY_WEAK",
+    "chinese_description": "非常弱",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signal",
+    "signal_value": "BUY",
+    "chinese_description": "买入信号",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signal",
+    "signal_value": "SELL",
+    "chinese_description": "卖出信号",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signal",
+    "signal_value": "HOLD",
+    "chinese_description": "持有信号",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "signal",
+    "signal_value": "WAIT",
+    "chinese_description": "等待信号",
+    "created_at": "2025-08-17T13:00:37.343466",
+    "updated_at": "2025-08-17T13:00:37.343466"
+  },
+  {
+    "signal_type": "obData",
+    "signal_value": "Bullish OB",
+    "chinese_description": "看涨订单块 - 机构买入区域",
+    "created_at": "2025-08-26T22:50:46.903241",
+    "updated_at": "2025-08-26T22:50:46.903241"
+  },
+  {
+    "signal_type": "obData",
+    "signal_value": "Bearish OB",
+    "chinese_description": "看跌订单块 - 机构卖出区域",
+    "created_at": "2025-08-26T22:50:46.903241",
+    "updated_at": "2025-08-26T22:50:46.903241"
+  }
+]

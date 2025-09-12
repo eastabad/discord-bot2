@@ -1,0 +1,498 @@
+{
+  "version": "1.0",
+  "created_at": "2025-08-17T14:34:49.467188",
+  "fields": {
+    "CVDsignal": {
+      "description": "CVD信号解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "cvdAboveMA",
+          "output": "CVD显示强烈买压，资金大量流入，机构积极建仓"
+        },
+        {
+          "type": "equals",
+          "value": "cvdBelowMA",
+          "output": "CVD显示卖压增加，资金流出明显，需要谨慎观察"
+        }
+      ],
+      "default_output": "CVD信号: {value}"
+    },
+    "pmaText": {
+      "description": "PMA趋势强度解析",
+      "conditions": [
+        {
+          "type": "contains",
+          "value": "Strong Bullish",
+          "output": "PMA显示强劲上涨动能，多头趋势非常明确，建议积极关注"
+        },
+        {
+          "type": "contains",
+          "value": "Bullish",
+          "output": "PMA显示看涨信号，上涨趋势初步确立"
+        },
+        {
+          "type": "contains",
+          "value": "Bearish",
+          "output": "PMA显示下跌信号，空头力量占据主导"
+        },
+        {
+          "type": "contains",
+          "value": "Strong Bearish",
+          "output": "PMA显示强烈下跌动能，建议规避风险"
+        }
+      ],
+      "default_output": "PMA趋势: {value}"
+    },
+    "signal": {
+      "description": "交易信号解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "BUY",
+          "output": "系统发出买入信号，多个技术指标汇聚支持上涨"
+        },
+        {
+          "type": "equals",
+          "value": "SELL",
+          "output": "系统发出卖出信号，技术面转向看空"
+        },
+        {
+          "type": "equals",
+          "value": "HOLD",
+          "output": "建议持有观望，等待更明确的方向信号"
+        }
+      ],
+      "default_output": "交易信号: {value}"
+    },
+    "close": {
+      "description": "价格解析",
+      "conditions": [
+        {
+          "type": "greater_than",
+          "value": 1000,
+          "output": "当前价格 ${value}，处于高价位区间"
+        },
+        {
+          "type": "range",
+          "value": {
+            "min": 100,
+            "max": 1000
+          },
+          "output": "当前价格 ${value}，处于中等价位区间"
+        }
+      ],
+      "default_output": "当前价格: ${value}"
+    },
+    "timeframe": {
+      "description": "时间框架解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1H",
+          "output": "基于1小时级别分析，适合短线交易"
+        },
+        {
+          "type": "equals",
+          "value": "4H",
+          "output": "基于4小时级别分析，适合中短线操作"
+        },
+        {
+          "type": "equals",
+          "value": "1D",
+          "output": "基于日线级别分析，适合中长线布局"
+        }
+      ],
+      "default_output": "分析周期: {value}"
+    },
+    "current_timeframe": {
+      "description": "当前时间框架解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1H",
+          "output": "基于1小时时间框架分析，适合短线交易操作"
+        },
+        {
+          "type": "equals",
+          "value": "4H",
+          "output": "基于4小时时间框架分析，适合中短线交易策略"
+        },
+        {
+          "type": "equals",
+          "value": "1D",
+          "output": "基于日线时间框架分析，适合中长线投资决策"
+        },
+        {
+          "type": "equals",
+          "value": "1W",
+          "output": "基于周线时间框架分析，适合长期投资布局"
+        }
+      ],
+      "default_output": "时间框架: {value}"
+    },
+    "adaptive_timeframe_1": {
+      "description": "自适应时间框架1解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1H",
+          "output": "第一层时间框架为1小时，捕捉短期价格波动"
+        },
+        {
+          "type": "equals",
+          "value": "4H",
+          "output": "第一层时间框架为4小时，观察中期趋势变化"
+        },
+        {
+          "type": "equals",
+          "value": "1D",
+          "output": "第一层时间框架为日线，分析主要趋势方向"
+        }
+      ],
+      "default_output": "自适应时间框架1: {value}"
+    },
+    "adaptive_timeframe_2": {
+      "description": "自适应时间框架2解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1H",
+          "output": "第二层时间框架为1小时，确认短期信号有效性"
+        },
+        {
+          "type": "equals",
+          "value": "4H",
+          "output": "第二层时间框架为4小时，验证中期趋势一致性"
+        },
+        {
+          "type": "equals",
+          "value": "1D",
+          "output": "第二层时间框架为日线，确认长期趋势支撑"
+        }
+      ],
+      "default_output": "自适应时间框架2: {value}"
+    },
+    "MAtrend": {
+      "description": "移动平均趋势解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1",
+          "output": "{current_timeframe}级别的MA趋势显示上涨趋势，多头排列"
+        },
+        {
+          "type": "equals",
+          "value": "-1",
+          "output": "{current_timeframe}级别的MA趋势显示下跌趋势，空头排列"
+        },
+        {
+          "type": "equals",
+          "value": "0",
+          "output": "{current_timeframe}级别的MA趋势中性，方向不明"
+        }
+      ],
+      "default_output": "MA趋势: {value}"
+    },
+    "MAtrend_timeframe1": {
+      "description": "时间框架1移动平均趋势",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1",
+          "output": "时间框架1的MA显示上涨趋势，短期多头力量强劲"
+        },
+        {
+          "type": "equals",
+          "value": "-1",
+          "output": "时间框架1的MA显示下跌趋势，短期空头力量占优"
+        },
+        {
+          "type": "equals",
+          "value": "0",
+          "output": "时间框架1的MA趋势中性，短期方向待定"
+        }
+      ],
+      "default_output": "MA趋势(时间框架1): {value}"
+    },
+    "MAtrend_timeframe2": {
+      "description": "时间框架2移动平均趋势",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1",
+          "output": "时间框架2的MA显示上涨趋势，中期多头趋势确立"
+        },
+        {
+          "type": "equals",
+          "value": "-1",
+          "output": "时间框架2的MA显示下跌趋势，中期空头趋势明确"
+        },
+        {
+          "type": "equals",
+          "value": "0",
+          "output": "时间框架2的MA趋势中性，中期方向不明确"
+        }
+      ],
+      "default_output": "MA趋势(时间框架2): {value}"
+    },
+    "TrendTracersignal": {
+      "description": "趋势追踪信号解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1",
+          "output": "{current_timeframe}级别的TrendTracer为蓝色的上涨趋势"
+        },
+        {
+          "type": "equals",
+          "value": "-1",
+          "output": "{current_timeframe}级别的TrendTracer为红色的下跌趋势"
+        }
+      ],
+      "default_output": "TrendTracer信号: {value}"
+    },
+    "TrendTracerHTF": {
+      "description": "高时间框架趋势追踪",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "1",
+          "output": "{adaptive_timeframe_1}级别的TrendTracer为蓝色的上涨趋势"
+        },
+        {
+          "type": "equals",
+          "value": "-1",
+          "output": "{adaptive_timeframe_1}级别的TrendTracer为粉色的下跌趋势"
+        },
+        {
+          "type": "equals",
+          "value": "0",
+          "output": "{adaptive_timeframe_1}级别的TrendTracer为灰色的中性状态"
+        }
+      ],
+      "default_output": "TrendTracerHTF: {value}"
+    },
+    "HTFwave_signal": {
+      "description": "高时间框架波浪信号",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "Bullish",
+          "output": "高时间框架波浪显示看涨信号，主要上升浪正在形成"
+        },
+        {
+          "type": "equals",
+          "value": "Bearish",
+          "output": "高时间框架波浪显示看跌信号，主要下跌浪正在展开"
+        },
+        {
+          "type": "equals",
+          "value": "Neutral",
+          "output": "高时间框架波浪信号中性，波浪结构尚不明确"
+        }
+      ],
+      "default_output": "HTF波浪信号: {value}"
+    },
+    "wavemarket_state": {
+      "description": "波浪市场状态解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "Long Strong",
+          "output": "波浪分析显示强劲上涨状态，建议积极做多"
+        },
+        {
+          "type": "equals",
+          "value": "Short Strong",
+          "output": "波浪分析显示强劲下跌状态，建议积极做空"
+        },
+        {
+          "type": "equals",
+          "value": "Long Weak",
+          "output": "波浪分析显示弱势上涨状态，谨慎做多"
+        },
+        {
+          "type": "equals",
+          "value": "Short Weak",
+          "output": "波浪分析显示弱势下跌状态，谨慎做空"
+        },
+        {
+          "type": "equals",
+          "value": "Neutral",
+          "output": "波浪市场状态中性，建议观望等待明确信号"
+        }
+      ],
+      "default_output": "波浪市场状态: {value}"
+    },
+    "AIbandsignal": {
+      "description": "AI波段信号解析",
+      "conditions": [
+        {
+          "type": "contains",
+          "value": "red downtrend",
+          "output": "AI波段显示红色下跌趋势，空头力量占据主导地位"
+        },
+        {
+          "type": "contains",
+          "value": "green uptrend",
+          "output": "AI波段显示绿色上涨趋势，多头力量强劲"
+        },
+        {
+          "type": "contains",
+          "value": "blue sideways",
+          "output": "AI波段显示蓝色横盘趋势，市场处于震荡状态"
+        },
+        {
+          "type": "contains",
+          "value": "downtrend",
+          "output": "AI波段信号显示下跌趋势"
+        },
+        {
+          "type": "contains",
+          "value": "uptrend",
+          "output": "AI波段信号显示上涨趋势"
+        }
+      ],
+      "default_output": "AI波段信号: {value}"
+    },
+    "trend_change_volatility_stop": {
+      "description": "趋势转变波动止损点解析 - 需要配合AIbandsignal使用",
+      "conditions": [
+        {
+          "type": "greater_than",
+          "value": 0,
+          "output": "关注趋势转变点${value}，这是{current_timeframe}级别下跌趋势转变点，突破该价格当前趋势转涨"
+        }
+      ],
+      "default_output": "趋势转变点: ${value}"
+    },
+    "lastSupplyText": {
+      "description": "最新供应区解析",
+      "conditions": [
+        {
+          "type": "contains",
+          "value": "15MIN",
+          "output": "最新供应区：{value}，15分钟级别阻力区间，价格接近该区域时考虑卖出"
+        },
+        {
+          "type": "contains",
+          "value": "1H",
+          "output": "最新供应区：{value}，1小时级别强阻力区间，重要的卖出参考位置"
+        },
+        {
+          "type": "contains",
+          "value": "4H",
+          "output": "最新供应区：{value}，4小时级别关键阻力区间，中期重要压力位"
+        },
+        {
+          "type": "contains",
+          "value": "1D",
+          "output": "最新供应区：{value}，日线级别主要阻力区间，长期重要压力区域"
+        }
+      ],
+      "default_output": "供应区：{value}"
+    },
+    "lastDemandText": {
+      "description": "最新需求区解析",
+      "conditions": [
+        {
+          "type": "contains",
+          "value": "15MIN",
+          "output": "最新需求区：{value}，15分钟级别支撑区间，价格接近该区域时考虑买入"
+        },
+        {
+          "type": "contains",
+          "value": "1H",
+          "output": "最新需求区：{value}，1小时级别强支撑区间，重要的买入参考位置"
+        },
+        {
+          "type": "contains",
+          "value": "4H",
+          "output": "最新需求区：{value}，4小时级别关键支撑区间，中期重要支撑位"
+        },
+        {
+          "type": "contains",
+          "value": "1D",
+          "output": "最新需求区：{value}，日线级别主要支撑区间，长期重要支撑区域"
+        }
+      ],
+      "default_output": "需求区：{value}"
+    },
+    "referencePrice": {
+      "description": "参考价格解析",
+      "conditions": [
+        {
+          "type": "greater_than",
+          "value": 0,
+          "output": "参考价格：${value}，当前市场重要参考点位"
+        }
+      ],
+      "default_output": "参考价格：${value}"
+    },
+    "obData": {
+      "description": "订单块数据解析",
+      "conditions": [
+        {
+          "type": "contains",
+          "value": "Bullish OB:",
+          "output": "订单块分析：{value}。检测到看涨订单块和看跌订单块区间，这些区域是机构和大资金的重要交易区域，价格接近这些区间时往往会产生强烈的支撑或阻力作用"
+        },
+        {
+          "type": "contains",
+          "value": "Bearish OB:",
+          "output": "订单块分析：{value}。识别到关键的订单块区域，这些价格区间代表机构资金的重要操作位置"
+        },
+        {
+          "type": "contains",
+          "value": "Timeframe:",
+          "output": "订单块数据：{value}。多级别订单块分析提供重要的价格反应区域参考"
+        }
+      ],
+      "default_output": "订单块数据：{value}"
+    },
+    "poc_summary": {
+      "description": "POC价格汇总解析",
+      "conditions": [
+        {
+          "type": "contains",
+          "value": "Daily POC:",
+          "output": "POC分析显示关键价格水平：{value}，这些是机构重点关注的成交密集区域，价格在这些水平附近容易形成支撑或阻力"
+        }
+      ],
+      "default_output": "POC价格信息: {value}"
+    },
+    "POCtrend": {
+      "description": "POC趋势信号解析",
+      "conditions": [
+        {
+          "type": "equals",
+          "value": "2",
+          "output": "强势多头趋势：价格站上所有周期的 POC，短中长期共振，多头主导"
+        },
+        {
+          "type": "equals",
+          "value": "1",
+          "output": "短期强势但中期承压：短线资金推高，但上周/月度 POC 压力仍在，谨慎追多"
+        },
+        {
+          "type": "equals",
+          "value": "0",
+          "output": "震荡区间：价格在不同周期 POC 之间波动，多空分歧，观望为主"
+        },
+        {
+          "type": "equals",
+          "value": "-1",
+          "output": "短期偏弱但中期强势：短线回调，但中期资金依然看多，可等待低吸机会"
+        },
+        {
+          "type": "equals",
+          "value": "-2",
+          "output": "强势空头趋势：价格跌破所有周期的 POC，短中长期共振，空头主导"
+        }
+      ],
+      "default_output": "POC趋势信号: {value}"
+    }
+  },
+  "updated_at": "2025-08-28T23:15:38.986909"
+}
