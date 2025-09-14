@@ -6,3 +6,6 @@ config/.env
 daily_logs/
 attached_assets/
 logs/
+.env
+.env.*
+config/.env
