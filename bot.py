@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 from webhook_handler import WebhookHandler
 from chart_service import ChartService
+from webhook_service import TradingAlertView
 from rate_limiter import RateLimiter
 from prediction_service import StockPredictionService
 from chart_analysis_service import ChartAnalysisService
@@ -72,6 +73,13 @@ class DiscordBot(commands.Bot):
             self.logger.error(f"❌ 数据库初始化失败: {e}")
             self.logger.error(f"DATABASE_URL: {os.environ.get('DATABASE_URL', 'NOT_SET')}")
             self.logger.error("用户限制功能可能无法正常工作")
+        
+        # 注册持久视图（Persistent View）以确保旧消息按钮在重启后仍可用
+        try:
+            self.add_view(TradingAlertView(alert_data={}, symbol='', timeframe='', alert_id=0, bot=self))
+            self.logger.info("✅ 持久视图 TradingAlertView 已注册")
+        except Exception as e:
+            self.logger.warning(f"⚠️ 注册持久视图失败: {e}")
         
         # 设置机器人状态
         await self.change_presence(
@@ -1452,18 +1460,24 @@ class DiscordBot(commands.Bot):
                     color=0x00ff00
                 )
                 embed.add_field(
-                    name="设置Webhook", 
-                    value="`!traderspost set <webhook_url>`\n配置您的TradersPost Webhook地址",
+                    name="💵 TIGER交易配置", 
+                    value="`!traderspost set <webhook_url>`\n配置TIGER TradersPost Webhook地址\n\n" +
+                          "`!traderspost info`\n查看所有配置状态\n\n" +
+                          "`!traderspost delete`\n删除TIGER配置",
                     inline=False
                 )
                 embed.add_field(
-                    name="查看配置", 
-                    value="`!traderspost info`\n查看当前配置状态",
+                    name="🏦 ETF交易配置", 
+                    value="`!traderspost etf set <webhook_url>`\n配置ETF专用TradersPost Webhook地址\n\n" +
+                          "`!traderspost etf info`\n查看ETF配置状态\n\n" +
+                          "`!traderspost etf delete`\n删除ETF配置",
                     inline=False
                 )
                 embed.add_field(
-                    name="删除配置", 
-                    value="`!traderspost delete`\n删除您的配置",
+                    name="🏛️ IBKR交易配置", 
+                    value="`!traderspost ibkr set <webhook_url>`\n配置IBKR专用TradersPost Webhook地址\n\n" +
+                          "`!traderspost ibkr info`\n查看IBKR配置状态\n\n" +
+                          "`!traderspost ibkr delete`\n删除IBKR配置",
                     inline=False
                 )
                 embed.add_field(
@@ -1477,7 +1491,36 @@ class DiscordBot(commands.Bot):
             
             command = parts[1].lower()
             
-            if command == "set":
+            # 处理ETF子命令
+            if command == "etf":
+                if len(parts) < 3:
+                    await message.reply("❌ ETF命令格式错误！请使用: `!traderspost etf <set|info|delete> [参数]`")
+                    return
+                etf_subcommand = parts[2].lower()
+                if etf_subcommand == "set":
+                    await self.handle_traderspost_etf_set(message, parts, user_id, username)
+                elif etf_subcommand == "info":
+                    await self.handle_traderspost_etf_info(message, user_id)
+                elif etf_subcommand == "delete":
+                    await self.handle_traderspost_etf_delete(message, user_id)
+                else:
+                    await message.reply("❌ 未知ETF子命令。使用 `!traderspost` 查看帮助信息")
+            # 处理IBKR子命令
+            elif command == "ibkr":
+                if len(parts) < 3:
+                    await message.reply("❌ IBKR命令格式错误！请使用: `!traderspost ibkr <set|info|delete> [参数]`")
+                    return
+                ibkr_subcommand = parts[2].lower()
+                if ibkr_subcommand == "set":
+                    await self.handle_traderspost_ibkr_set(message, parts, user_id, username)
+                elif ibkr_subcommand == "info":
+                    await self.handle_traderspost_ibkr_info(message, user_id)
+                elif ibkr_subcommand == "delete":
+                    await self.handle_traderspost_ibkr_delete(message, user_id)
+                else:
+                    await message.reply("❌ 未知IBKR子命令。使用 `!traderspost` 查看帮助信息")
+            # 处理TIGER命令
+            elif command == "set":
                 await self.handle_traderspost_set(message, parts, user_id, username)
             elif command == "info":
                 await self.handle_traderspost_info(message, user_id)
@@ -1584,7 +1627,7 @@ class DiscordBot(commands.Bot):
             await message.reply(f"❌ 设置配置时发生错误: {str(e)}")
     
     async def handle_traderspost_info(self, message, user_id):
-        """查看TradersPost配置信息"""
+        """查看所有TradersPost配置信息"""
         try:
             from models import TradersPostConfig, get_db_session
             db = get_db_session()
@@ -1596,32 +1639,64 @@ class DiscordBot(commands.Bot):
             if not config:
                 embed = discord.Embed(
                     title="📋 TradersPost配置状态",
-                    description="您尚未配置TradersPost Webhook",
+                    description="您尚未配置任何TradersPost Webhook",
                     color=0xffa500
                 )
-                embed.add_field(name="配置方法", value="`!traderspost set <webhook_url>`", inline=False)
+                embed.add_field(name="配置方法", value="`!traderspost set <webhook_url>` - 配置TIGER webhook\n"
+                                                     "`!traderspost etf set <url>` - 配置ETF webhook\n"
+                                                     "`!traderspost ibkr set <url>` - 配置IBKR webhook", inline=False)
                 await message.reply(embed=embed)
                 return
             
             db.close()
             
-            # 隐藏敏感URL信息
-            masked_url = self.mask_sensitive_url(config.webhook_url)
-            
             embed = discord.Embed(
-                title="📋 TradersPost配置信息",
-                description="您的TradersPost配置详情",
-                color=0x00ff00 if config.is_active else 0xff0000
+                title="📋 TradersPost配置总览",
+                description="您的所有TradersPost Webhook配置详情",
+                color=0x0066cc
             )
-            embed.add_field(name="状态", value="🟢 已启用" if config.is_active else "🔴 已禁用", inline=True)
-            embed.add_field(name="Webhook URL", value=masked_url, inline=False)
-            embed.add_field(name="创建时间", value=config.created_at.strftime('%Y-%m-%d %H:%M'), inline=True)
-            embed.add_field(name="更新时间", value=config.updated_at.strftime('%Y-%m-%d %H:%M'), inline=True)
             
-            if config.last_used:
-                embed.add_field(name="最后使用", value=config.last_used.strftime('%Y-%m-%d %H:%M'), inline=True)
+            # TIGER配置
+            if config.webhook_url:
+                masked_url = self.mask_sensitive_url(config.webhook_url)
+                status_emoji = "✅" if config.is_active else "❌"
+                status_text = "已激活" if config.is_active else "已停用"
+                tiger_info = f"**URL**: {masked_url}\n**状态**: {status_emoji} {status_text}"
+                if config.last_used:
+                    tiger_info += f"\n**最后使用**: {config.last_used.strftime('%Y-%m-%d %H:%M')}"
+                embed.add_field(name="💵 TIGER交易", value=tiger_info, inline=False)
+            else:
+                embed.add_field(name="💵 TIGER交易", value="未配置\n使用 `!traderspost set <url>` 配置", inline=False)
             
-            embed.set_footer(text="使用 !traderspost delete 删除配置")
+            # ETF配置
+            if getattr(config, 'etf_webhook_url', None):
+                masked_url = self.mask_sensitive_url(config.etf_webhook_url)
+                status_emoji = "✅" if getattr(config, 'etf_is_active', False) else "❌"
+                status_text = "已激活" if getattr(config, 'etf_is_active', False) else "已停用"
+                etf_info = f"**URL**: {masked_url}\n**状态**: {status_emoji} {status_text}"
+                if getattr(config, 'etf_last_used', None):
+                    etf_info += f"\n**最后使用**: {config.etf_last_used.strftime('%Y-%m-%d %H:%M')}"
+                embed.add_field(name="🏦 ETF交易", value=etf_info, inline=False)
+            else:
+                embed.add_field(name="🏦 ETF交易", value="未配置\n使用 `!traderspost etf set <url>` 配置", inline=False)
+            
+            # IBKR配置
+            if getattr(config, 'ibkr_webhook_url', None):
+                masked_url = self.mask_sensitive_url(config.ibkr_webhook_url)
+                status_emoji = "✅" if getattr(config, 'ibkr_is_active', False) else "❌"
+                status_text = "已激活" if getattr(config, 'ibkr_is_active', False) else "已停用"
+                ibkr_info = f"**URL**: {masked_url}\n**状态**: {status_emoji} {status_text}"
+                if getattr(config, 'ibkr_last_used', None):
+                    ibkr_info += f"\n**最后使用**: {config.ibkr_last_used.strftime('%Y-%m-%d %H:%M')}"
+                embed.add_field(name="🏛️ IBKR交易", value=ibkr_info, inline=False)
+            else:
+                embed.add_field(name="🏛️ IBKR交易", value="未配置\n使用 `!traderspost ibkr set <url>` 配置", inline=False)
+            
+            embed.add_field(name="📅 配置信息", 
+                          value=f"创建时间: {config.created_at.strftime('%Y-%m-%d %H:%M')}\n"
+                                f"更新时间: {config.updated_at.strftime('%Y-%m-%d %H:%M')}", 
+                          inline=False)
+            embed.set_footer(text="使用对应的 delete 命令删除各个配置")
             await message.reply(embed=embed)
             
         except Exception as e:
@@ -1660,6 +1735,303 @@ class DiscordBot(commands.Bot):
             self.logger.error(f"删除TradersPost配置失败: {e}")
             await message.reply("❌ 删除配置时发生错误")
     
+    async def handle_traderspost_etf_set(self, message, parts, user_id, username):
+        """设置ETF TradersPost配置"""
+        try:
+            self.logger.info(f"处理traderspost etf set命令，用户: {username}, 参数数量: {len(parts)}")
+            if len(parts) < 4:
+                await message.reply("❌ 格式错误！请使用: `!traderspost etf set <webhook_url>`")
+                return
+                
+            webhook_url = parts[3]
+            
+            # 验证URL格式
+            if not webhook_url.startswith(('http://', 'https://')):
+                await message.reply("❌ URL格式错误！请提供完整的HTTP/HTTPS URL")
+                return
+            
+            # 验证是否为TradersPost URL
+            if 'traderspost' not in webhook_url.lower():
+                embed = discord.Embed(
+                    title="⚠️ ETF URL警告",
+                    description="检测到这可能不是TradersPost官方URL。\n\n请确认您使用的是正确的TradersPost ETF Webhook地址。",
+                    color=0xffa500
+                )
+                embed.add_field(name="您输入的URL", value=webhook_url, inline=False)
+                embed.add_field(name="继续配置吗？", value="请确认后回复 `confirm` 继续设置", inline=False)
+                await message.reply(embed=embed)
+                
+                # 等待用户确认
+                def check(m):
+                    return m.author == message.author and m.channel == message.channel
+                
+                try:
+                    confirm_msg = await self.wait_for('message', check=check, timeout=30.0)
+                    if confirm_msg.content.lower() != 'confirm':
+                        await message.reply("❌ ETF配置已取消")
+                        return
+                except asyncio.TimeoutError:
+                    await message.reply("❌ 确认超时，ETF配置已取消")
+                    return
+            
+            # 保存到数据库
+            try:
+                from models import TradersPostConfig, get_db_session
+                db = get_db_session()
+            except Exception as db_error:
+                self.logger.error(f"数据库连接失败: {db_error}")
+                await message.reply("❌ 数据库连接失败，请联系管理员")
+                return
+            
+            # 检查是否已存在配置
+            existing_config = db.query(TradersPostConfig).filter(
+                TradersPostConfig.user_id == user_id
+            ).first()
+            
+            if existing_config:
+                # 更新现有配置的ETF URL
+                existing_config.etf_webhook_url = webhook_url
+                existing_config.username = username
+                existing_config.etf_is_active = True
+                existing_config.updated_at = datetime.now()
+            else:
+                # 创建新配置（只设置ETF URL，股票URL留空）
+                new_config = TradersPostConfig(
+                    user_id=user_id,
+                    username=username,
+                    webhook_url="https://placeholder.traderspost.io/placeholder",  # 临时占位
+                    etf_webhook_url=webhook_url,
+                    is_active=False,  # 股票交易未配置
+                    etf_is_active=True
+                )
+                db.add(new_config)
+            
+            db.commit()
+            db.close()
+            
+            # 确认消息
+            embed = discord.Embed(
+                title="✅ ETF TradersPost配置成功",
+                description="您的ETF TradersPost Webhook已配置完成！",
+                color=0x00ff00
+            )
+            embed.add_field(name="配置用户", value=username, inline=True)
+            embed.add_field(name="ETF交易状态", value="✅ 已启用", inline=True)
+            embed.add_field(name="功能", value="现在可以在个人webhook中使用TradeETF按钮", inline=False)
+            embed.set_footer(text="ETF交易信号将发送到您配置的专用地址")
+            await message.reply(embed=embed)
+            
+            self.logger.info(f"ETF TradersPost配置设置成功，用户: {username}")
+            
+        except Exception as e:
+            self.logger.error(f"设置ETF TradersPost配置失败: {e}")
+            import traceback
+            self.logger.error(f"详细错误信息: {traceback.format_exc()}")
+            await message.reply("❌ 设置ETF配置时发生错误，请检查URL格式或稍后重试")
+
+    async def handle_traderspost_etf_info(self, message, user_id):
+        """显示ETF TradersPost配置信息"""
+        try:
+            from models import TradersPostConfig, get_db_session
+            db = get_db_session()
+            
+            config = db.query(TradersPostConfig).filter(
+                TradersPostConfig.user_id == user_id
+            ).first()
+            
+            if not config or not config.etf_webhook_url:
+                await message.reply("❌ 您尚未配置ETF TradersPost Webhook。\n\n使用 `!traderspost etf set <webhook_url>` 进行配置")
+                return
+            
+            # 遮蔽敏感信息
+            masked_url = self.mask_sensitive_url(config.etf_webhook_url)
+            
+            embed = discord.Embed(
+                title="📋 ETF TradersPost配置信息",
+                description="您的ETF TradersPost配置详情",
+                color=0x00ff00 if config.etf_is_active else 0xff0000
+            )
+            embed.add_field(name="ETF交易状态", value="🟢 已启用" if config.etf_is_active else "🔴 已禁用", inline=True)
+            embed.add_field(name="ETF Webhook URL", value=masked_url, inline=False)
+            embed.add_field(name="创建时间", value=config.created_at.strftime('%Y-%m-%d %H:%M'), inline=True)
+            embed.add_field(name="更新时间", value=config.updated_at.strftime('%Y-%m-%d %H:%M'), inline=True)
+            
+            if config.etf_last_used:
+                embed.add_field(name="ETF最后使用", value=config.etf_last_used.strftime('%Y-%m-%d %H:%M'), inline=True)
+            
+            embed.set_footer(text="使用 !traderspost etf delete 删除ETF配置")
+            await message.reply(embed=embed)
+            
+        except Exception as e:
+            self.logger.error(f"获取ETF TradersPost配置信息失败: {e}")
+            await message.reply("❌ 获取ETF配置信息时发生错误")
+
+    async def handle_traderspost_etf_delete(self, message, user_id):
+        """删除ETF TradersPost配置"""
+        try:
+            from models import TradersPostConfig, get_db_session
+            db = get_db_session()
+            
+            config = db.query(TradersPostConfig).filter(
+                TradersPostConfig.user_id == user_id
+            ).first()
+            
+            if not config or not config.etf_webhook_url:
+                await message.reply("❌ 您尚未配置ETF TradersPost Webhook")
+                return
+            
+            # 只删除ETF URL，保留股票配置
+            config.etf_webhook_url = None
+            config.etf_is_active = False
+            config.etf_last_used = None
+            db.commit()
+            db.close()
+            
+            embed = discord.Embed(
+                title="🗑️ ETF TradersPost配置已删除",
+                description="您的ETF TradersPost配置已成功删除",
+                color=0xff0000
+            )
+            embed.add_field(name="影响", value="个人webhook中的TradeETF按钮将无法使用", inline=False)
+            embed.add_field(name="股票交易", value="股票交易配置未受影响", inline=False)
+            embed.add_field(name="重新配置", value="使用 `!traderspost etf set <webhook_url>` 重新配置ETF", inline=False)
+            await message.reply(embed=embed)
+            
+        except Exception as e:
+            self.logger.error(f"删除ETF TradersPost配置失败: {e}")
+            await message.reply("❌ 删除ETF配置时发生错误")
+    
+    async def handle_traderspost_ibkr_set(self, message, parts, user_id, username):
+        """设置IBKR TradersPost配置"""
+        try:
+            self.logger.info(f"处理traderspost ibkr set命令，用户: {username}, 参数数量: {len(parts)}")
+            if len(parts) < 4:
+                await message.reply("❌ 格式错误！请使用: `!traderspost ibkr set <webhook_url>`")
+                return
+                
+            webhook_url = parts[3]
+            
+            # 验证URL格式
+            if not webhook_url.startswith(('http://', 'https://')):
+                await message.reply("❌ URL格式错误！请提供完整的HTTP/HTTPS URL")
+                return
+            
+            # 保存到数据库
+            from models import TradersPostConfig, get_db_session
+            db = get_db_session()
+            
+            # 检查用户是否已有配置
+            config = db.query(TradersPostConfig).filter(
+                TradersPostConfig.user_id == user_id
+            ).first()
+            
+            if config:
+                # 更新现有配置
+                config.ibkr_webhook_url = webhook_url
+                config.ibkr_is_active = True
+                config.updated_at = datetime.now()
+            else:
+                # 创建新配置（需要同时有主webhook_url）
+                await message.reply("❌ 请先使用 `!traderspost set <url>` 配置TIGER webhook，然后再配置IBKR")
+                db.close()
+                return
+            
+            db.commit()
+            db.close()
+            
+            # 成功提示
+            masked_url = self.mask_sensitive_url(webhook_url)
+            embed = discord.Embed(
+                title="✅ IBKR TradersPost配置成功",
+                description="您的IBKR专用TradersPost Webhook已配置完成",
+                color=0x00ff00
+            )
+            embed.add_field(name="📌 Webhook URL", value=masked_url, inline=False)
+            embed.add_field(name="✅ 状态", value="已激活", inline=True)
+            embed.add_field(name="💡 使用方式", value="在个人webhook交易信号中点击 🏛️IBKR 按钮即可执行IBKR交易", inline=False)
+            embed.add_field(name="🔄 回退机制", value="如未配置IBKR URL，点击IBKR按钮时将自动使用TIGER webhook", inline=False)
+            embed.set_footer(text="使用 !traderspost ibkr info 查看详细配置")
+            await message.reply(embed=embed)
+            self.logger.info(f"IBKR TradersPost配置设置成功，用户: {username}")
+            
+        except Exception as e:
+            self.logger.error(f"设置IBKR TradersPost配置失败: {e}")
+            await message.reply("❌ 设置IBKR配置时发生错误")
+    
+    async def handle_traderspost_ibkr_info(self, message, user_id):
+        """查看IBKR TradersPost配置信息"""
+        try:
+            from models import TradersPostConfig, get_db_session
+            db = get_db_session()
+            
+            config = db.query(TradersPostConfig).filter(
+                TradersPostConfig.user_id == user_id
+            ).first()
+            
+            if not config or not config.ibkr_webhook_url:
+                await message.reply("❌ 您尚未配置IBKR TradersPost Webhook。\n\n使用 `!traderspost ibkr set <webhook_url>` 进行配置")
+                return
+            
+            # 遮蔽敏感信息
+            masked_url = self.mask_sensitive_url(config.ibkr_webhook_url)
+            
+            # 状态展示
+            status_emoji = "✅" if config.ibkr_is_active else "❌"
+            status_text = "已激活" if config.ibkr_is_active else "已停用"
+            
+            embed = discord.Embed(
+                title="🏛️ IBKR TradersPost配置信息",
+                description=f"您的IBKR专用TradersPost配置详情",
+                color=0x00ff00 if config.ibkr_is_active else 0xff0000
+            )
+            embed.add_field(name="📌 Webhook URL", value=masked_url, inline=False)
+            embed.add_field(name=f"{status_emoji} 状态", value=status_text, inline=True)
+            if config.ibkr_last_used:
+                last_used_str = config.ibkr_last_used.strftime('%Y-%m-%d %H:%M:%S')
+                embed.add_field(name="⏰ 最后使用", value=last_used_str, inline=True)
+            embed.add_field(name="💡 使用方式", value="在个人webhook交易信号中点击 🏛️IBKR 按钮执行IBKR交易", inline=False)
+            embed.set_footer(text="使用 !traderspost ibkr delete 删除IBKR配置")
+            await message.reply(embed=embed)
+            
+        except Exception as e:
+            self.logger.error(f"获取IBKR TradersPost配置信息失败: {e}")
+            await message.reply("❌ 获取IBKR配置信息时发生错误")
+    
+    async def handle_traderspost_ibkr_delete(self, message, user_id):
+        """删除IBKR TradersPost配置"""
+        try:
+            from models import TradersPostConfig, get_db_session
+            db = get_db_session()
+            
+            config = db.query(TradersPostConfig).filter(
+                TradersPostConfig.user_id == user_id
+            ).first()
+            
+            if not config or not config.ibkr_webhook_url:
+                await message.reply("❌ 您尚未配置IBKR TradersPost Webhook")
+                return
+            
+            # 只删除IBKR URL，保留其他配置
+            config.ibkr_webhook_url = None
+            config.ibkr_is_active = False
+            config.ibkr_last_used = None
+            db.commit()
+            db.close()
+            
+            embed = discord.Embed(
+                title="🗑️ IBKR TradersPost配置已删除",
+                description="您的IBKR TradersPost配置已成功删除",
+                color=0xff0000
+            )
+            embed.add_field(name="影响", value="个人webhook中的🏛️IBKR按钮将回退使用TIGER webhook", inline=False)
+            embed.add_field(name="其他交易", value="TIGER和ETF交易配置未受影响", inline=False)
+            embed.add_field(name="重新配置", value="使用 `!traderspost ibkr set <webhook_url>` 重新配置IBKR", inline=False)
+            await message.reply(embed=embed)
+            
+        except Exception as e:
+            self.logger.error(f"删除IBKR TradersPost配置失败: {e}")
+            await message.reply("❌ 删除IBKR配置时发生错误")
+
     def mask_sensitive_url(self, url):
         """遮蔽敏感URL信息"""
         try:

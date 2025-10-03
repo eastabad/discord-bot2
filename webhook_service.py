@@ -21,18 +21,83 @@ from poc_analyzer import get_poc_analyzer
 
 
 class TradingAlertView(discord.ui.View):
-    """交易信号交互式按钮视图"""
+    """交易信号交互式按钮视图（持久视图）"""
     
     def __init__(self, alert_data: dict, symbol: str, timeframe: str, alert_id: int, bot):
-        super().__init__(timeout=3600)  # 1小时超时
+        # 使用持久视图：即使Bot重启，旧消息上的按钮仍然可用
+        super().__init__(timeout=None)
         self.alert_data = alert_data
         self.symbol = symbol
         self.timeframe = timeframe
         self.alert_id = alert_id
         self.bot = bot
         self.logger = logging.getLogger(__name__)
+        
+        # 架构师建议的全面调试日志
+        button_info = [(child.label, getattr(child, 'row', 'None'), child.style) for child in self.children if hasattr(child, 'label')]
+        self.logger.info(f"🔧 TradingAlertView初始化完成 - 按钮列表: {button_info}")
+        self.logger.info(f"🔧 TradingAlertView模块路径: {self.__class__.__module__}")
+        
+        # 确保ETF按钮存在的断言检查
+        etf_exists = any(child.label and 'ETF' in child.label for child in self.children)
+        self.logger.info(f"🔧 ETF按钮存在检查: {etf_exists}")
+
+    def _ensure_min_context(self, interaction: discord.Interaction) -> bool:
+        """从消息embed中尽量还原必要上下文，用于旧消息在Bot重启后的回调。
+        返回 True 表示已补齐 ticker/action 等最低限度字段；否则返回 False。
+        """
+        try:
+            # 若已有关键字段则直接通过
+            if isinstance(self.alert_data, dict) and self.alert_data.get('ticker') and self.alert_data.get('action'):
+                return True
+
+            # 尝试从消息的第一个embed解析
+            if not interaction.message or not interaction.message.embeds:
+                return False
+            emb = interaction.message.embeds[0]
+
+            # 解析ticker
+            ticker = None
+            if emb.title:
+                import re as _re
+                m = _re.search(r"for\s+([A-Z:]+)", emb.title)
+                if m:
+                    ticker = m.group(1)
+            if not ticker:
+                for fld in emb.fields:
+                    if fld.name and str(fld.name).lower().startswith('ticker'):
+                        ticker = (fld.value or '').strip().split()[0]
+                        break
+
+            # 解析action
+            action = None
+            for fld in emb.fields:
+                if fld.name and str(fld.name).lower().startswith('action'):
+                    action = (fld.value or '').strip().split()[0].lower()
+                    break
+
+            if not isinstance(self.alert_data, dict):
+                self.alert_data = {}
+            if ticker:
+                self.alert_data.setdefault('ticker', ticker)
+            if action:
+                self.alert_data.setdefault('action', action)
+            # 缺省数量，避免报错；真实数量由后端计算
+            self.alert_data.setdefault('quantity', 0)
+
+            # 尝试时间框架
+            if not self.timeframe and emb.description:
+                # 常见格式包含 "| 15m" 之类
+                import re as _re
+                m2 = _re.search(r"\b(1m|3m|5m|15m|30m|45m|1h|2h|4h|1d|1w|1mo)\b", emb.description)
+                if m2:
+                    self.timeframe = m2.group(1)
+
+            return bool(self.alert_data.get('ticker') and self.alert_data.get('action'))
+        except Exception:
+            return False
     
-    @discord.ui.button(label='Get Chart', emoji='📈', style=discord.ButtonStyle.gray)
+    @discord.ui.button(label='Get Chart', emoji='📈', style=discord.ButtonStyle.gray, custom_id='get_chart_btn')
     async def get_chart(self, interaction: discord.Interaction, button: discord.ui.Button):
         """获取图表按钮处理"""
         try:
@@ -122,7 +187,7 @@ class TradingAlertView(discord.ui.View):
                 # 交互已过期，记录错误但不重复发送
                 self.logger.warning("交互已过期，无法发送错误消息")
     
-    @discord.ui.button(label='AI Decision', emoji='⚛️', style=discord.ButtonStyle.gray)
+    @discord.ui.button(label='AI Decision', emoji='⚛️', style=discord.ButtonStyle.gray, custom_id='ai_decision_btn')
     async def ai_analysis(self, interaction: discord.Interaction, button: discord.ui.Button):
         """AI分析按钮处理"""
         try:
@@ -169,7 +234,7 @@ class TradingAlertView(discord.ui.View):
             except discord.errors.NotFound:
                 self.logger.warning("交互已过期，无法发送AI分析错误消息")
     
-    @discord.ui.button(label='Order Block', emoji='🔲', style=discord.ButtonStyle.gray)
+    @discord.ui.button(label='Order Block', emoji='🔲', style=discord.ButtonStyle.gray, custom_id='order_block_btn')
     async def get_ob_chart(self, interaction: discord.Interaction, button: discord.ui.Button):
         """获取Order Block图表按钮处理"""
         try:
@@ -260,11 +325,17 @@ class TradingAlertView(discord.ui.View):
                 # 交互已过期，记录错误但不重复发送
                 self.logger.warning("交互已过期，无法发送错误消息")
     
-    @discord.ui.button(label='TradeNow', emoji='💵', style=discord.ButtonStyle.gray)
+    @discord.ui.button(label='💵TIGER', style=discord.ButtonStyle.primary, row=1, custom_id='tiger_btn')
     async def execute_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """执行交易按钮处理"""
+        """TIGER交易执行按钮处理"""
         try:
-            await interaction.response.defer()
+            if not interaction.response.is_done():
+                await interaction.response.defer(ephemeral=True, thinking=True)
+
+            # 保障旧消息的上下文可用
+            if not self._ensure_min_context(interaction):
+                await interaction.followup.send("⚠️ 该信号较旧，必要数据已过期。请使用最新的交易卡片再次执行。", ephemeral=True)
+                return
             
             # 检查用户是否配置了TradersPost
             user_id = str(interaction.user.id)
@@ -302,12 +373,21 @@ class TradingAlertView(discord.ui.View):
                 
                 traderspost_url = config.webhook_url
             
-                # 发送原始JSON到TradersPost
+                # 创建股票交易报文
+                from tradingview_handler import TradingViewHandler
+                handler = TradingViewHandler()
+                stock_message = handler.create_stock_trade_message(self.alert_data)
+                
+                if not stock_message:
+                    await interaction.followup.send("❌ 无法构建股票交易报文，请检查数据格式")
+                    return
+            
+                # 发送股票交易JSON到TradersPost
                 import aiohttp
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
                         traderspost_url,
-                        json=self.alert_data,
+                        json=stock_message,
                         headers={'Content-Type': 'application/json'}
                     ) as response:
                         if response.status == 200:
@@ -355,6 +435,297 @@ class TradingAlertView(discord.ui.View):
         except Exception as e:
             self.logger.error(f"处理交易执行按钮失败: {e}")
             await interaction.followup.send("❌ 交易执行失败，请检查TradersPost配置")
+    
+    @discord.ui.button(label='🏦TradeETF', style=discord.ButtonStyle.success, row=1, custom_id='trade_etf_btn')
+    async def execute_etf_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.defer(ephemeral=True, thinking=True)
+
+            # 保障旧消息的上下文可用（ETF报文依赖较多字段，尽力而为）
+            if not self._ensure_min_context(interaction):
+                await interaction.followup.send("⚠️ 该信号较旧，ETF所需详细数据已过期，请使用最新交易卡片。", ephemeral=True)
+                return
+            user_id = str(interaction.user.id)
+            from models import TradersPostConfig
+            db = get_db_session()
+            try:
+                config = db.query(TradersPostConfig).filter(TradersPostConfig.user_id == user_id).first()
+                if not config:
+                    embed = discord.Embed(title='⚡ 配置TradersPost交易执行', description='未配置任何TradersPost webhook', color=0xffa500)
+                    embed.add_field(name='设置', value='!traderspost set <url> 或 !traderspost etf set <url>', inline=False)
+                    await interaction.followup.send(embed=embed)
+                    return
+
+                webhook_url, webhook_type = None, ''
+                if getattr(config, 'etf_webhook_url', None) and getattr(config, 'etf_is_active', False):
+                    webhook_url, webhook_type = config.etf_webhook_url, 'ETF专用'
+                elif getattr(config, 'webhook_url', None) and getattr(config, 'is_active', False):
+                    webhook_url, webhook_type = config.webhook_url, '股票回退'
+
+                if not webhook_url:
+                    embed = discord.Embed(title='🔧 需要激活TradersPost配置', description='配置未激活或URL无效', color=0xffa500)
+                    embed.add_field(name='解决', value='!traderspost set <url> 或 !traderspost etf set <url>', inline=False)
+                    await interaction.followup.send(embed=embed)
+                    return
+
+                from tradingview_handler import TradingViewHandler
+                handler = TradingViewHandler()
+                etf_message = handler.create_etf_trade_message(self.alert_data)
+                if not etf_message:
+                    await interaction.followup.send('❌ 无法构建ETF交易报文')
+                    return
+
+                self.logger.info(f"发送ETF交易 -> {webhook_type}: {etf_message.get('ticker')} {etf_message.get('action')} {etf_message.get('quantity')}")
+
+                import aiohttp
+                import asyncio
+
+                safe_url = webhook_url.split('/webhooks/')[0] + '/webhooks/***' if '/webhooks/' in webhook_url else webhook_url
+                self.logger.info(f"POST ETF交易请求到: {safe_url}")
+                
+                # 详细记录请求内容用于调试
+                import json
+                self.logger.info(f"ETF交易请求JSON: {json.dumps(etf_message, ensure_ascii=False, indent=2)}")
+                self.logger.info(f"ETF交易请求URL: {webhook_url}")
+
+                timeout = aiohttp.ClientTimeout(total=10, connect=5, sock_read=10)
+                try:
+                    self.logger.info(f"开始建立HTTP连接到: {webhook_url}")
+                    async with aiohttp.ClientSession(timeout=timeout) as session:
+                        self.logger.info(f"HTTP会话已创建，发送POST请求...")
+                        async with session.post(
+                            webhook_url,
+                            json=etf_message,
+                            headers={'Content-Type': 'application/json'}
+                        ) as response:
+                            self.logger.info(f"收到HTTP响应: {response.status}")
+                            if response.status == 200:
+                                success_embed = discord.Embed(
+                                    title="🏦 ETF交易执行成功",
+                                    description=f"已发送 {etf_message.get('ticker')} ETF交易信号到TradersPost",
+                                    color=0x00ff00
+                                )
+                                success_embed.add_field(
+                                    name="📊 ETF交易详情",
+                                    value=(
+                                        f"ETF代码: {etf_message.get('ticker')}\n"
+                                        f"操作: {etf_message.get('action')}\n"
+                                        f"数量: {etf_message.get('quantity')}股\n"
+                                    ),
+                                    inline=True
+                                )
+                                success_embed.add_field(name="🔗 Webhook类型", value=f"使用 {webhook_type} webhook", inline=True)
+                                await interaction.followup.send(embed=success_embed)
+
+                                if webhook_type == 'ETF专用':
+                                    config.etf_last_used = datetime.now()
+                                else:
+                                    config.last_used = datetime.now()
+                                db.commit()
+                            else:
+                                error_text = await response.text()
+                                self.logger.error(f"ETF交易HTTP响应: {response.status}")
+                                self.logger.error(f"ETF交易响应内容: {error_text}")
+                                if response.status == 404:
+                                    error_embed = discord.Embed(
+                                        title=f"❌ TradersPost Webhook失效 ({webhook_type})",
+                                        description=f"您的{webhook_type}webhook URL已失效或不存在",
+                                        color=0xff0000
+                                    )
+                                    if webhook_type == 'ETF专用':
+                                        error_embed.add_field(
+                                            name='🔧 解决步骤',
+                                            value=(
+                                                "1. 登录TradersPost控制面板\n"
+                                                "2. 重新生成ETF专用webhook URL\n"
+                                                "3. 使用 `!traderspost etf set <新的URL>` 更新配置"
+                                            ),
+                                            inline=False
+                                        )
+                                    else:
+                                        error_embed.add_field(
+                                            name='🔧 解决步骤',
+                                            value=(
+                                                "1. 登录TradersPost控制面板\n"
+                                                "2. 重新生成webhook URL\n"
+                                                "3. 使用 `!traderspost set <新的URL>` 更新配置"
+                                            ),
+                                            inline=False
+                                        )
+                                    await interaction.followup.send(embed=error_embed)
+                                else:
+                                    self.logger.error(f"ETF交易失败: {response.status} - {error_text[:200]}")
+                                    await interaction.followup.send(
+                                        f"❌ ETF TradersPost执行失败 ({webhook_type})\n错误码: {response.status}\n详情: {error_text[:200]}"
+                                    )
+                except asyncio.TimeoutError:
+                    self.logger.error(f"ETF交易请求超时: {safe_url}")
+                    await interaction.followup.send("❌ ETF交易请求超时(10秒)\n可能的原因：网络连接问题或服务器无响应")
+                except Exception as general_error:
+                    self.logger.error(f"ETF交易发送异常: {type(general_error).__name__}: {general_error}")
+                    await interaction.followup.send(f"❌ ETF交易发送异常: {type(general_error).__name__}")
+                except aiohttp.ClientConnectorError as conn_error:
+                    self.logger.error(f"ETF交易连接失败: {conn_error}")
+                    await interaction.followup.send("❌ ETF交易连接失败\n请检查webhook URL是否正确")
+                except aiohttp.ClientResponseError as resp_error:
+                    self.logger.error(f"ETF交易响应错误: {resp_error}")
+                    await interaction.followup.send(f"❌ ETF交易响应错误: {resp_error.status}")
+                except Exception as req_error:
+                    self.logger.error(f"ETF交易请求异常: {req_error}")
+                    await interaction.followup.send("❌ ETF交易发送失败，请稍后重试")
+            finally:
+                db.close()
+        except Exception as e:
+            self.logger.error(f'ETF交易执行失败: {e}')
+            try:
+                await interaction.followup.send('❌ ETF交易执行失败，请稍后重试')
+            except Exception:
+                pass
+    
+    @discord.ui.button(label='🏛️IBKR', style=discord.ButtonStyle.secondary, row=1, custom_id='ibkr_btn')
+    async def execute_ibkr_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.defer(ephemeral=True, thinking=True)
+
+            if not self._ensure_min_context(interaction):
+                await interaction.followup.send("⚠️ 该信号较旧，必要数据已过期。请使用最新的交易卡片再次执行。", ephemeral=True)
+                return
+            user_id = str(interaction.user.id)
+            
+            from models import TradersPostConfig
+            db = get_db_session()
+            try:
+                config = db.query(TradersPostConfig).filter(TradersPostConfig.user_id == user_id).first()
+                if not config:
+                    embed = discord.Embed(
+                        title='⚡ 配置TradersPost交易执行',
+                        description='未配置任何TradersPost webhook',
+                        color=0xffa500
+                    )
+                    embed.add_field(
+                        name='设置',
+                        value='使用 `!traderspost ibkr set <url>` 配置IBKR webhook',
+                        inline=False
+                    )
+                    await interaction.followup.send(embed=embed)
+                    return
+                
+                webhook_url, webhook_type = None, ''
+                if getattr(config, 'ibkr_webhook_url', None) and getattr(config, 'ibkr_is_active', False):
+                    webhook_url, webhook_type = config.ibkr_webhook_url, 'IBKR专用'
+                elif getattr(config, 'webhook_url', None) and getattr(config, 'is_active', False):
+                    webhook_url, webhook_type = config.webhook_url, 'TIGER回退'
+                
+                if not webhook_url:
+                    embed = discord.Embed(
+                        title='🔧 需要激活TradersPost配置',
+                        description='配置未激活或URL无效',
+                        color=0xffa500
+                    )
+                    embed.add_field(
+                        name='解决',
+                        value='使用 `!traderspost ibkr set <url>` 配置IBKR webhook',
+                        inline=False
+                    )
+                    await interaction.followup.send(embed=embed)
+                    return
+                
+                from tradingview_handler import TradingViewHandler
+                handler = TradingViewHandler()
+                stock_message = handler.create_stock_trade_message(self.alert_data)
+                if not stock_message:
+                    await interaction.followup.send('❌ 无法构建IBKR交易报文')
+                    return
+                
+                self.logger.info(f"发送IBKR交易 -> {webhook_type}: {stock_message.get('ticker')} {stock_message.get('action')} {stock_message.get('quantity')}")
+                
+                import aiohttp
+                import asyncio
+                import json
+                
+                safe_url = webhook_url.split('/webhooks/')[0] + '/webhooks/***' if '/webhooks/' in webhook_url else webhook_url
+                self.logger.info(f"POST IBKR交易请求到: {safe_url}")
+                self.logger.info(f"IBKR交易请求JSON: {json.dumps(stock_message, ensure_ascii=False, indent=2)}")
+                
+                timeout = aiohttp.ClientTimeout(total=10, connect=5, sock_read=10)
+                try:
+                    async with aiohttp.ClientSession(timeout=timeout) as session:
+                        async with session.post(
+                            webhook_url,
+                            json=stock_message,
+                            headers={'Content-Type': 'application/json'}
+                        ) as response:
+                            if response.status == 200:
+                                success_embed = discord.Embed(
+                                    title="🏛️ IBKR交易执行成功",
+                                    description=f"已发送 {stock_message.get('ticker')} 交易信号到TradersPost",
+                                    color=0x00ff00
+                                )
+                                success_embed.add_field(
+                                    name="📊 交易详情",
+                                    value=(
+                                        f"股票: {stock_message.get('ticker')}\n"
+                                        f"操作: {stock_message.get('action')}\n"
+                                    ),
+                                    inline=True
+                                )
+                                success_embed.add_field(
+                                    name="🔗 Webhook类型",
+                                    value=f"使用 {webhook_type} webhook",
+                                    inline=True
+                                )
+                                await interaction.followup.send(embed=success_embed)
+                                
+                                if webhook_type == 'IBKR专用':
+                                    config.ibkr_last_used = datetime.now()
+                                else:
+                                    config.last_used = datetime.now()
+                                db.commit()
+                            else:
+                                error_text = await response.text()
+                                self.logger.error(f"IBKR交易HTTP响应: {response.status}")
+                                self.logger.error(f"IBKR交易响应内容: {error_text}")
+                                if response.status == 404:
+                                    error_embed = discord.Embed(
+                                        title=f"❌ TradersPost Webhook失效 ({webhook_type})",
+                                        description=f"您的{webhook_type}webhook URL已失效或不存在",
+                                        color=0xff0000
+                                    )
+                                    error_embed.add_field(
+                                        name='🔧 解决步骤',
+                                        value=(
+                                            "1. 登录TradersPost控制面板\n"
+                                            "2. 重新生成IBKR webhook URL\n"
+                                            "3. 使用 `!traderspost ibkr set <新的URL>` 更新配置"
+                                        ),
+                                        inline=False
+                                    )
+                                    await interaction.followup.send(embed=error_embed)
+                                else:
+                                    self.logger.error(f"IBKR交易失败: {response.status} - {error_text[:200]}")
+                                    await interaction.followup.send(
+                                        f"❌ IBKR TradersPost执行失败 ({webhook_type})\n错误码: {response.status}\n详情: {error_text[:200]}"
+                                    )
+                except asyncio.TimeoutError:
+                    self.logger.error(f"IBKR交易请求超时: {safe_url}")
+                    await interaction.followup.send("❌ IBKR交易请求超时(10秒)\n可能的原因：网络连接问题或服务器无响应")
+                except aiohttp.ClientConnectorError as conn_error:
+                    self.logger.error(f"IBKR交易连接失败: {conn_error}")
+                    await interaction.followup.send("❌ IBKR交易连接失败\n请检查webhook URL是否正确")
+                except Exception as req_error:
+                    self.logger.error(f"IBKR交易请求异常: {req_error}")
+                    await interaction.followup.send("❌ IBKR交易发送失败，请稍后重试")
+            finally:
+                db.close()
+        except Exception as e:
+            self.logger.error(f'IBKR交易执行失败: {e}')
+            try:
+                await interaction.followup.send('❌ IBKR交易执行失败，请稍后重试')
+            except Exception:
+                pass
     
     async def generate_ai_report_async(self, multi_ai, prompt: str) -> Optional[str]:
         """异步生成AI报告 (增强错误处理)"""
@@ -920,18 +1291,20 @@ class PersonalWebhookService:
             action = alert_data.get('action', 'buy').lower()
             sentiment = alert_data.get('sentiment', 'bullish').lower()
             
-            # 判断信号类型
+            # 提取其他数据
+            extras = alert_data.get('extras', {})
+            
+            # 判断信号类型和颜色 - 完全匹配JavaScript代码
             if sentiment == 'flat':
                 signal_type = 'ExitShort' if action == 'buy' else 'ExitLong'
-                color = 16776960  # 黄色 (0xFFFF00)
+                color = 16776960  # 黄色 (JavaScript: 16776960)
                 emoji = '🟨'
             else:
                 signal_type = 'Long' if action == 'buy' else 'Short'
-                color = 65280 if action == 'buy' else 16711680  # 绿色或红色
+                color = 65280 if action == 'buy' else 16711680  # 绿色或红色 (JavaScript值)
                 emoji = '🟩' if action == 'buy' else '🟥'
             
-            # 提取其他数据
-            extras = alert_data.get('extras', {})
+            # 提取其他数据 (extras已在上面定义)
             osc_rating = float(extras.get('oscrating', 0))
             trend_rating = float(extras.get('trendrating', 0))
             rating = int(osc_rating + trend_rating)
@@ -961,58 +1334,87 @@ class PersonalWebhookService:
                              data_level.get('referencePrice') or 
                              extras.get('referencePrice'))
             
-            # 构建描述
+            # 构建描述 - 匹配JavaScript原始格式
             if sentiment == 'flat':
                 description = f"**Action**: {signal_type}\n**Ticker**: {ticker}\n**Indicator**: `{indicator}` {emoji}"
             else:
-                description = f"**Action**: {signal_type}\n**Ticker**: {ticker}\n**Price**: Market Price\n**Rating**: `{rating}` {emoji}\n**Position**: `{position}`\n**Risk**: `{risk_stars}`"
+                # 在Price中添加RefPrice信息
+                price_text = "Market Price"
+                if reference_price:
+                    price_text = f"Market Price (RefPrice ${reference_price})"
+                description = f"**Action**: {signal_type}\n**Ticker**: {ticker}\n**Price**: {price_text}\n**Rating**: `{rating}` {emoji}\n**Position**: `{position}`\n**Risk**: `{risk_stars}`"
             
             # 美东时间 - 修复为美国东部时间
             est_date = current_est.strftime('%m/%d/%Y')
             est_time = current_est.strftime('%I:%M:%S %p')
             
-            # 构建字段 - 添加新的供需区字段
+            # 构建字段 - 完全匹配JavaScript原始格式
             if sentiment == 'flat':
                 fields = [
-                    {"name": "Timeframe", "value": timeframe_value, "inline": True},
-                    {"name": "Indicator", "value": indicator, "inline": False}
+                    {"name": "Indicator", "value": f"{indicator} | {timeframe_value}", "inline": False}
                 ]
             else:
                 fields = [
                     {"name": "Take Profit", "value": f"${take_profit}", "inline": True},
                     {"name": "Stop Loss", "value": f"${stop_loss}", "inline": True},
-                    {"name": "Timeframe", "value": timeframe_value, "inline": True},
-                    {"name": "Indicator", "value": indicator, "inline": False}
+                    {"name": "Indicator", "value": f"{indicator} | {timeframe_value}", "inline": False}
                 ]
                 
-                # 添加新的供需区字段
-                if last_supply_text:
-                    fields.append({"name": "Nearest Supply", "value": str(last_supply_text), "inline": True})
-                if last_demand_text:
-                    fields.append({"name": "Nearest Demand", "value": str(last_demand_text), "inline": True})
-                if reference_price:
-                    fields.append({"name": "Reference Price", "value": f"${reference_price}", "inline": True})
+                # 添加线条分隔符 - indicator和supply之间
+                fields.append({"name": "\u200B", "value": "====================================", "inline": False})
                 
-                # 添加Order Block信息字段
+                # 添加供需区字段 - 移除框框格式
+                if last_supply_text and str(last_supply_text) != 'N/A':
+                    fields.append({"name": "Nearest Supply", "value": str(last_supply_text), "inline": True})
+                if last_demand_text and str(last_demand_text) != 'N/A':
+                    fields.append({"name": "Nearest Demand", "value": str(last_demand_text), "inline": True})
+                
+                # RefPrice已经移至Price描述中，不再需要单独字段
+                
+                # 添加Order Block信息字段（移除框框格式）
                 ob_data = (alert_data.get('obData') or 
                           data_level.get('obData') or 
                           extras.get('obData'))
                 if ob_data:
-                    fields.append({"name": "Order Block Info", "value": str(ob_data), "inline": False})
+                    # 解析Order Block数据并格式化为新样式
+                    ob_formatted = self.format_order_block_data(str(ob_data))
+                    fields.append({"name": "Order Block Info", "value": ob_formatted, "inline": False})
                 
-                # 添加POC相关信息 (放在OB信息下面，排成两行)
+                # 添加POC相关信息 (放在OB信息下面，移除框框格式)
                 poc_analyzer = get_poc_analyzer()
                 poc_data = poc_analyzer.parse_poc_data(alert_data)
                 poc_formatted = poc_analyzer.format_poc_info_for_embed(poc_data)
                 if poc_formatted:
                     fields.append({"name": "POC Analysis", "value": poc_formatted, "inline": False})
                 
-                # 移除时间字段，将在footer中显示
+                # 添加线条分隔符 - POC和ETF之间
+                fields.append({"name": "\u200B", "value": "====================================", "inline": False})
+                
+                # 添加ETF相关信息 (类似POC格式)
+                etf_data = extras.get('etf')
+                if etf_data and isinstance(etf_data, dict):
+                    etf_ticker = etf_data.get('ticker')
+                    etf_entry = etf_data.get('entryPrice')
+                    etf_tp = etf_data.get('takeProfit')
+                    etf_sl = etf_data.get('stopLoss')
+                    
+                    if etf_ticker and any([etf_entry, etf_tp, etf_sl]):
+                        # 价格信息
+                        price_parts = []
+                        if etf_entry:
+                            price_parts.append(f"**Entry**: ${etf_entry}")
+                        if etf_tp:
+                            price_parts.append(f"**TP**: ${etf_tp}")
+                        if etf_sl:
+                            price_parts.append(f"**SL**: ${etf_sl}")
+                        
+                        etf_formatted = ' | '.join(price_parts)
+                        fields.append({"name": f"ETF info：{etf_ticker}", "value": etf_formatted, "inline": False})
             
             # 获取ticker logo
             logo_url = self.get_ticker_logo(ticker)
             
-            # 构建最终embed，添加footer
+            # 构建最终embed - 完全匹配JavaScript格式
             embed_data = {
                 "title": f"{signal_type} Signal for {ticker}",
                 "description": description,
@@ -1039,6 +1441,37 @@ class PersonalWebhookService:
                 "timestamp": datetime.now().isoformat()
             }
     
+    def format_order_block_data(self, ob_data_str: str) -> str:
+        """
+        格式化Order Block数据为简化显示格式（红绿区分，去除文字）
+        :green_circle: 176.76 - 175.96 :red_circle: 182.49 - 182.06
+        """
+        try:
+            import re
+            parts = []
+            
+            # 解析Bullish OB（绿色）
+            bullish_match = re.search(r'Bullish OB:\s*([\d.]+)\s*-\s*([\d.]+)', ob_data_str)
+            if bullish_match:
+                price1, price2 = bullish_match.groups()
+                parts.append(f":green_circle: {price1} - {price2}")
+            
+            # 解析Bearish OB（红色）
+            bearish_match = re.search(r'Bearish OB:\s*([\d.]+)\s*-\s*([\d.]+)', ob_data_str)
+            if bearish_match:
+                price1, price2 = bearish_match.groups()
+                parts.append(f":red_circle: {price1} - {price2}")
+            
+            if parts:
+                return ' '.join(parts)
+            else:
+                # 如果解析失败，返回原始数据
+                return str(ob_data_str)
+                
+        except Exception as e:
+            self.logger.error(f"格式化Order Block数据失败: {e}")
+            return str(ob_data_str)
+
     def risk_to_stars(self, risk_value):
         """
         将风险值转换为星级显示
@@ -1061,6 +1494,35 @@ class PersonalWebhookService:
         except:
             return 'N/A'
     
+    def is_etf_symbol(self, ticker: str) -> bool:
+        """
+        检测是否为ETF代码 (基于常见ETF列表)
+        """
+        if not ticker:
+            return False
+            
+        ticker_upper = ticker.upper()
+        
+        # 常见ETF列表
+        common_etfs = {
+            'SPY', 'QQQ', 'IWM', 'VTI', 'VEA', 'VWO', 'AGG', 'BND', 'VNQ', 
+            'GLD', 'SLV', 'USO', 'TLT', 'IEF', 'LQD', 'HYG', 'EFA', 'EEM',
+            'XLF', 'XLE', 'XLK', 'XLV', 'XLI', 'XLP', 'XLY', 'XLU', 'XLB',
+            'ARKK', 'ARKQ', 'ARKG', 'ARKW', 'ARKF', 'SOXL', 'TQQQ', 'SQQQ',
+            'UVXY', 'VIX', 'VIXY', 'SVXY', 'FAS', 'FAZ', 'TNA', 'TZA',
+            'SPXL', 'SPXS', 'UPRO', 'TMF', 'TMV', 'LABU', 'LABD',
+            'TECL', 'TECS', 'FXI', 'ASHR', 'MCHI', 'KWEB', 'PDD',
+            'JETS', 'XBI', 'IBB', 'SOXX', 'SMH', 'XRT', 'XOP', 'XME',
+            'GDXJ', 'GDX', 'SILJ', 'PPLT', 'DBA', 'DBC', 'UNG', 'USL'
+        }
+        
+        # 基于后缀判断 (某些ETF有特定后缀)
+        etf_patterns = ['.TO', '.L', '.PA', '.F', '.MI', '.AS']
+        
+        return (ticker_upper in common_etfs or 
+                any(ticker_upper.endswith(pattern) for pattern in etf_patterns) or
+                'ETF' in ticker_upper)
+
     def get_ticker_logo(self, ticker: str) -> str:
         """
         获取股票代码对应的logo URL
@@ -1072,8 +1534,8 @@ class PersonalWebhookService:
         try:
             ticker_upper = ticker.upper()
             
-            # 方案1: 尝试logo.dev API (新平台)
-            logo_url = f"https://img.logo.dev/ticker/{ticker_upper}?token=pk_ezLKIu-XSp2aKlPx2HnIBw&format=png&retina=true"
+            # 方案1: 尝试logo.dev API (新平台) - 更大尺寸
+            logo_url = f"https://img.logo.dev/ticker/{ticker_upper}?token=pk_ezLKIu-XSp2aKlPx2HnIBw&format=png&retina=true&size=160"
             
             # logo.dev API不支持HEAD请求，直接尝试GET请求验证
             import requests
@@ -1190,7 +1652,7 @@ class PersonalWebhookService:
                     embed_data = self.create_trading_embed_from_data(alert_data, symbol, timeframe)
                     embed = discord.Embed.from_dict(embed_data)
                     
-                    # 创建交互式按钮
+                    # 创建交互式按钮 - 总是显示两个交易按钮
                     view = TradingAlertView(alert_data, symbol, timeframe, alert_id, self.bot)
                     
                     # 发送私信带按钮
@@ -1241,6 +1703,7 @@ class PersonalWebhookService:
         except Exception as e:
             self.logger.error(f"发送交易Alert到用户失败: {e}")
             return False
+
     
     def send_alert_to_user(self, user_id: str, message: str, alert_id: int) -> bool:
         """
@@ -1269,9 +1732,52 @@ class PersonalWebhookService:
                     embed_data = self.create_trading_embed(message)
                     embed = discord.Embed.from_dict(embed_data)
                     
-                    # 发送私信
+                    # 🎯 架构师修复：在中心发送函数中创建TradingAlertView
+                    view = None
                     try:
-                        await user.send(embed=embed)
+                        # 尝试解析alert数据创建交互式按钮
+                        import json
+                        import sys
+                        
+                        # 简单解析消息获取symbol等信息（message通常包含交易信息）
+                        symbol = "UNKNOWN"
+                        timeframe = "15m"
+                        mock_alert_data = {"symbol": symbol, "action": "BUY", "quantity": 10}
+                        
+                        # 尝试从message中提取更多信息
+                        if isinstance(message, str):
+                            try:
+                                # 如果message是JSON格式的字符串
+                                parsed_msg = json.loads(message)
+                                if isinstance(parsed_msg, dict):
+                                    symbol = parsed_msg.get('ticker', parsed_msg.get('symbol', 'UNKNOWN'))
+                                    mock_alert_data = parsed_msg
+                            except:
+                                pass
+                        
+                        # 创建TradingAlertView
+                        view = TradingAlertView(mock_alert_data, symbol, timeframe, alert_id, self.bot)
+                        
+                        # 🔥 强制调试日志确认View创建
+                        button_labels = [getattr(c, 'label', None) for c in view.children]
+                        debug_msg = f"🎯🔥 CENTRAL VIEW CREATED: module={view.__class__.__module__} buttons={button_labels} alert_id={alert_id}"
+                        print(debug_msg, file=sys.stdout, flush=True)
+                        self.logger.info(debug_msg)
+                        
+                    except Exception as view_error:
+                        error_msg = f"🎯 中心View创建失败: {view_error}"
+                        print(error_msg, file=sys.stdout, flush=True)
+                        self.logger.error(error_msg)
+                    
+                    # 发送私信（带View或不带View）
+                    try:
+                        if view:
+                            await user.send(embed=embed, view=view)
+                            success_msg = f"🎯 成功发送带View的Alert到用户 {user_id} (按钮数: {len(view.children)})"
+                            print(success_msg, file=sys.stdout, flush=True)
+                            self.logger.info(success_msg)
+                        else:
+                            await user.send(embed=embed)
                         
                         # 更新数据库状态
                         db = get_db_session()
